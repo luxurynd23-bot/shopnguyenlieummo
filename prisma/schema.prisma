@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  balance      Int      @default(0)
+  role         String   @default("USER")
+  deposits     Deposit[]
+
+  createdAt    DateTime @default(now())
+}
+
+model Deposit {
+  id        String   @id @default(cuid())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  amount    Int
+  bank      String   @default("MBBank")
+  note      String
+
+  status    String   @default("PENDING")
+
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id        String   @id @default(cuid())
+  name      String
+  price     Int
+  stock     Int      @default(0)
+  content   String?
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+
+  product   String
+  amount    Int
+  content   String?
+
+  items     AccountItem[]
+
+  createdAt DateTime @default(now())
+}
+
+model AccountItem {
+  id        String   @id @default(cuid())
+  productId String
+
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id])
+
+  content   String
+
+  sold      Boolean  @default(false)
+  soldAt    DateTime?
+
+  createdAt DateTime @default(now())
+}
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
