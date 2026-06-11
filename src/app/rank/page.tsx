@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -48,10 +48,14 @@ export default function RankingPage() {
       <section style={main}>
         <header style={header}>
           <button style={menu}>☰</button>
+
           <div style={wallet}>
             💳 Ví: {(user?.balance || 0).toLocaleString("vi-VN")}đ
           </div>
-          <div style={userBox}>🌙 🔔 🧔 {user?.name || user?.email || "Khách"}⌄</div>
+
+          <div style={userBox}>
+            🌙 🔔 🧔 {user?.name || user?.email || "Khách"}⌄
+          </div>
         </header>
 
         <div style={content}>
@@ -69,7 +73,9 @@ export default function RankingPage() {
               <div key={u.rank} style={row}>
                 <div style={rank}>{u.rank}</div>
                 <div style={member}>{u.name}</div>
-                <div style={money}>{Number(u.amount || 0).toLocaleString("vi-VN")}đ</div>
+                <div style={money}>
+                  {Number(u.amount || 0).toLocaleString("vi-VN")}đ
+                </div>
                 <div style={u.trend === "up" ? up : down}>
                   {u.trend === "up" ? "↑" : "↓"}
                 </div>
@@ -77,9 +83,7 @@ export default function RankingPage() {
             ))}
 
             {ranking.length === 0 && (
-              <div style={empty}>
-                Chưa có dữ liệu nạp tiền.
-              </div>
+              <div style={empty}>Chưa có dữ liệu nạp tiền.</div>
             )}
           </div>
         </div>
