@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -31,14 +31,8 @@ export default function RegisterPage() {
     try {
       const res = await fetch("/api/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
       });
 
       const data = await res.json();
@@ -70,7 +64,7 @@ export default function RegisterPage() {
         </div>
 
         <h1 style={title}>ĐĂNG KÝ</h1>
-        <p style={subTitle}>Tạo tài khoản để bắt đầu mua hàng</p>
+        <p style={subTitle}>Tạo tài khoản để bắt đầu trải nghiệm</p>
 
         <label style={label}>👤 Tên đăng nhập</label>
         <input
@@ -214,6 +208,7 @@ const logoImg: any = {
   width: 86,
   height: 86,
   objectFit: "contain",
+  filter: "drop-shadow(0 0 12px #22d3ee)",
 };
 
 const title: any = {
