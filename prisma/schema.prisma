@@ -14,6 +14,8 @@ model User {
   passwordHash String
   name         String?
   balance      Int      @default(0)
+
+  totalDeposit Int @default(0)
   role         String   @default("USER")
   deposits     Deposit[]
 

@@ -1,19 +1,29 @@
 "use client";
 
-const topUsers = [
-  { rank: 1, name: "hoa*******", amount: "11.155.200đ", trend: "↑" },
-  { rank: 2, name: "let********", amount: "10.117.000đ", trend: "↓" },
-  { rank: 3, name: "093********", amount: "7.242.500đ", trend: "↓" },
-  { rank: 4, name: "TRU********", amount: "5.916.000đ", trend: "↑" },
-  { rank: 5, name: "man********", amount: "5.567.700đ", trend: "↓" },
-  { rank: 6, name: "kie********", amount: "4.900.000đ", trend: "↑" },
-  { rank: 7, name: "hoc********", amount: "4.892.000đ", trend: "↓" },
-  { rank: 8, name: "pha********", amount: "3.837.940đ", trend: "↓" },
-  { rank: 9, name: "tai********", amount: "3.723.000đ", trend: "↓" },
-  { rank: 10, name: "huy********", amount: "3.328.900đ", trend: "↓" },
-];
+import { useEffect, useState } from "react";
 
 export default function RankingPage() {
+  const [ranking, setRanking] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
+
+  async function loadData() {
+    try {
+      const meRes = await fetch("/api/me");
+      const meData = await meRes.json();
+      setUser(meData.user || null);
+
+      const rankRes = await fetch("/api/rank");
+      const rankData = await rankRes.json();
+      setRanking(rankData.ranking || []);
+    } catch {
+      setRanking([]);
+    }
+  }
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
   return (
     <main style={page}>
       <aside style={sidebar}>
@@ -27,7 +37,7 @@ export default function RankingPage() {
 
         <nav style={nav}>
           <a href="/" style={navItem}>🏠 Trang Chủ</a>
-          <a href="/orders" style={navItem}>🛒 Mua Tài Khoản</a>
+          <a href="/" style={navItem}>🛒 Mua Tài Khoản</a>
           <a href="/orders" style={navItem}>↺ Lịch Sử Mua Hàng</a>
           <a href="/rank" style={navActive}>🏆 Bảng Xếp Hạng</a>
           <a href="/deposit" style={navItem}>🏦 Ngân Hàng</a>
@@ -38,8 +48,10 @@ export default function RankingPage() {
       <section style={main}>
         <header style={header}>
           <button style={menu}>☰</button>
-          <div style={wallet}>💳 Ví: 138.234đ</div>
-          <div style={user}>🌙 🔔 🧔 Thien2309⌄</div>
+          <div style={wallet}>
+            💳 Ví: {(user?.balance || 0).toLocaleString("vi-VN")}đ
+          </div>
+          <div style={userBox}>🌙 🔔 🧔 {user?.name || user?.email || "Khách"}⌄</div>
         </header>
 
         <div style={content}>
@@ -53,14 +65,22 @@ export default function RankingPage() {
               <div>Vị Trí</div>
             </div>
 
-            {topUsers.map((u) => (
+            {ranking.map((u) => (
               <div key={u.rank} style={row}>
                 <div style={rank}>{u.rank}</div>
                 <div style={member}>{u.name}</div>
-                <div style={money}>{u.amount}</div>
-                <div style={u.trend === "↑" ? up : down}>{u.trend}</div>
+                <div style={money}>{Number(u.amount || 0).toLocaleString("vi-VN")}đ</div>
+                <div style={u.trend === "up" ? up : down}>
+                  {u.trend === "up" ? "↑" : "↓"}
+                </div>
               </div>
             ))}
+
+            {ranking.length === 0 && (
+              <div style={empty}>
+                Chưa có dữ liệu nạp tiền.
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -168,7 +188,7 @@ const wallet: any = {
   fontWeight: 900,
 };
 
-const user: any = {
+const userBox: any = {
   color: "#e5e7eb",
   fontWeight: 800,
 };
@@ -233,4 +253,10 @@ const down: any = {
   color: "#ff2b6d",
   fontSize: 26,
   textAlign: "center",
+};
+
+const empty: any = {
+  padding: 30,
+  textAlign: "center",
+  color: "#cbd5e1",
 };
