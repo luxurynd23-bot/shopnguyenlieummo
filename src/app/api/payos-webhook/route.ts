@@ -32,21 +32,35 @@ export async function POST(req: Request) {
     await prisma.$transaction([
       prisma.deposit.update({
         where: { id: deposit.id },
-        data: { status: "PAID" },
+        data: {
+          status: "PAID",
+        },
       }),
+
       prisma.user.update({
         where: { id: deposit.userId },
         data: {
           balance: {
-            increment: deposit.amount,
+            increment: amount,
+          },
+          totalDeposit: {
+            increment: amount,
           },
         },
       }),
     ]);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error("WEBHOOK ERROR:", error);
-    return NextResponse.json({ success: false }, { status: 500 });
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Lỗi webhook",
+        error: error?.message || String(error),
+      },
+      { status: 500 }
+    );
   }
 }
