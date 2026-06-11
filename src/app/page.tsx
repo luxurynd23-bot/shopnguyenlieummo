@@ -2,14 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const categories = [
-  "TẤT CẢ",
-  "TIKTOK VIỆT",
-  "GMAIL",
-  "HOTMAIL",
-  "SHOPEE",
-  "PROXY",
-];
+const categories = ["TẤT CẢ", "TIKTOK VIỆT", "GMAIL", "HOTMAIL", "SHOPEE", "PROXY"];
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
@@ -17,13 +10,12 @@ export default function Home() {
   const [keyword, setKeyword] = useState("");
   const [activeCat, setActiveCat] = useState("TẤT CẢ");
   const [showUserMenu, setShowUserMenu] = useState(false);
-
   const [buyProduct, setBuyProduct] = useState<any>(null);
   const [buyQty, setBuyQty] = useState(1);
   const [loadingBuy, setLoadingBuy] = useState(false);
 
   const [settings, setSettings] = useState<any>({
-    shopName: "NL MMO",
+    shopName: "ShopMMO",
     shopDomain: "shopnguyenlieummo.info.vn",
     warrantyText: "Bảo hành 6 giờ kể từ thời điểm giao tài khoản.",
     noticeText: "Sau khi mua, hệ thống tự động trừ số dư và giao tài khoản.",
@@ -43,16 +35,10 @@ export default function Home() {
       const dataSettings = await resSettings.json();
 
       setSettings({
-        shopName: dataSettings.settings?.shopName || "NL MMO",
-        shopDomain:
-          dataSettings.settings?.shopDomain ||
-          "shopnguyenlieummo.info.vn",
-        warrantyText:
-          dataSettings.settings?.warrantyText ||
-          "Bảo hành 6 giờ kể từ thời điểm giao tài khoản.",
-        noticeText:
-          dataSettings.settings?.noticeText ||
-          "Sau khi mua, hệ thống tự động trừ số dư và giao tài khoản.",
+        shopName: dataSettings.settings?.shopName || "ShopMMO",
+        shopDomain: dataSettings.settings?.shopDomain || "shopnguyenlieummo.info.vn",
+        warrantyText: dataSettings.settings?.warrantyText || "Bảo hành 6 giờ kể từ thời điểm giao tài khoản.",
+        noticeText: dataSettings.settings?.noticeText || "Sau khi mua, hệ thống tự động trừ số dư và giao tài khoản.",
       });
     } catch (err) {
       console.error(err);
@@ -93,10 +79,7 @@ export default function Home() {
       const res = await fetch("/api/buy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: buyProduct.id,
-          quantity: buyQty,
-        }),
+        body: JSON.stringify({ productId: buyProduct.id, quantity: buyQty }),
       });
 
       const data = await res.json();
@@ -137,26 +120,30 @@ export default function Home() {
     <div style={styles.page}>
       <aside style={styles.sidebar}>
         <div style={styles.logoBox}>
-          <div style={styles.logo}>{settings.shopName}</div>
-          <div style={styles.domain}>{settings.shopDomain}</div>
+          <div style={styles.logoRow}>
+            <img src="/tiktok-logo.png" style={styles.sideLogoImg} />
+            <div>
+              <div style={styles.logo}>{settings.shopName}</div>
+              <div style={styles.domain}>{settings.shopDomain}</div>
+            </div>
+          </div>
         </div>
 
-        <div style={styles.balanceBox}>
-          <div>SỐ DƯ</div>
-          <b>{(user?.balance || 0).toLocaleString("vi-VN")}đ</b>
+        <div style={styles.smallText}>Select Language: <b>Vietnamese</b></div>
+        <div style={styles.smallText}>Select Currency: <b>VND⌄</b></div>
+
+        <div style={styles.balanceLine}>
+          SỐ DƯ <b>{(user?.balance || 0).toLocaleString("vi-VN")}đ</b> - GIẢM: <b style={{ color: "red" }}>0%</b>
         </div>
 
         <nav style={styles.nav}>
-          <a href="/" style={styles.navItem}>🏠 Trang chủ</a>
-          <a href="/orders" style={styles.navItem}>🛒 Lịch sử mua</a>
-          <a href="/wallet" style={styles.navItem}>💰 Ví của tôi</a>
-          <a href="/deposit" style={styles.navItem}>🏦 Nạp tiền</a>
-          <a href="/deposit-history" style={styles.navItem}>📜 Lịch sử nạp</a>
-          <a href="/settings" style={styles.navItem}>⚙️ Cài đặt</a>
-
-          <button onClick={logout} style={styles.navButton}>
-            🚪 Đăng xuất
-          </button>
+          <a href="/" style={styles.navItem}>🏠 Trang Chủ</a>
+          <a href="/orders" style={styles.navItem}>🛒 Mua Tài Khoản</a>
+          <a href="/orders" style={styles.navItem}>📋 Lịch Sử Mua Hàng</a>
+          <a href="/deposit" style={styles.navItem}>🏦 Ngân Hàng</a>
+          <a href="/deposit-history" style={styles.navItem}>📜 Hoá Đơn</a>
+          <a href="/settings" style={styles.navItem}>⚙️ Cài Đặt</a>
+          <button onClick={logout} style={styles.navButton}>🚪 Đăng xuất</button>
 
           {user?.role === "ADMIN" && (
             <>
@@ -171,12 +158,15 @@ export default function Home() {
 
       <main style={styles.main}>
         <header style={styles.header}>
-          <input
-            placeholder="Tìm sản phẩm..."
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            style={styles.search}
-          />
+          <div style={styles.leftHeader}>
+            <button style={styles.menuBtn}>☰</button>
+            <input
+              placeholder="Tìm sản phẩm..."
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              style={styles.search}
+            />
+          </div>
 
           {user ? (
             <div style={styles.userArea}>
@@ -185,10 +175,7 @@ export default function Home() {
               <span style={styles.bell}>🔔</span>
 
               <div style={styles.userWrap}>
-                <div
-                  style={styles.userHead}
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                >
+                <div style={styles.userHead} onClick={() => setShowUserMenu(!showUserMenu)}>
                   <div style={styles.avatar}>
                     {(user.name || user.email || "U").charAt(0).toUpperCase()}
                   </div>
@@ -208,42 +195,36 @@ export default function Home() {
               </div>
             </div>
           ) : (
-  <div style={{ display: "flex", gap: 10 }}>
-    <a href="/login" style={styles.loginBtn}>
-      Đăng nhập
-    </a>
-
-    <a
-      href="/register"
-      style={{
-        background: "#16a34a",
-        color: "white",
-        padding: "10px 16px",
-        borderRadius: 8,
-        textDecoration: "none",
-        fontWeight: 800,
-      }}
-    >
-      Đăng ký
-    </a>
-  </div>
-)}
+            <div style={{ display: "flex", gap: 10 }}>
+              <a href="/login" style={styles.loginBtn}>Đăng nhập</a>
+              <a href="/register" style={styles.registerBtn}>Đăng ký</a>
+            </div>
+          )}
         </header>
 
         <section style={styles.content}>
           <div style={styles.notice}>
-            <h2>Thông báo</h2>
-            <p>{settings.warrantyText}</p>
-            <p>{settings.noticeText}</p>
-            <b style={{ color: "#dc2626" }}>
-              Vui lòng kiểm tra tài khoản ngay sau khi mua.
+            <b style={{ color: "#a21caf" }}>
+              Bảo hành đăng nhập lần đầu trong 1 ngày kể từ lúc mua hàng.
             </b>
-            <p>
-              Vào nhóm để cập nhật thông báo và bảo hành zalo:
-              https://zalo.me/g/qrwsmhppu8dnxawtu3xu
+            <br />
+            <b>Nên mua số lượng đủ làm trong ngày và nên mua ít kiểm tra trước.</b>
+            <p><b>{settings.warrantyText}</b></p>
+            <p>{settings.noticeText}</p>
+            <p style={{ color: "#2563eb" }}>
+              Link tải tool đọc OTP toàn bộ các email hotmail, Mail Domain có trên web.
+              <br />
+              Tính năng copy và input toàn bộ thông tin username|pass|email.
+              <br />
+              Tự động nhận dạng email input cần lựa chọn email đọc.
             </p>
-            <p>ADMIN hỗ trợ: http://zalo.me/84337116737</p>
+            <p>• Nhóm thông báo <b>SUPPORT HỖ TRỢ</b> <span style={{ color: "#2563eb" }}>ZALO</span></p>
+            <b style={{ color: "#b91c1c" }}>
+              ⚠ Lưu ý: Mọi hành vi sử dụng vào các mục đích vi phạm pháp luật đều bị cấm.
+            </b>
           </div>
+
+          <div style={styles.blueBar}>Chuyên link đọc OTP loại ac Mail Domain</div>
 
           <div style={styles.categoryGrid}>
             {categories.map((cat) => (
@@ -252,33 +233,42 @@ export default function Home() {
                 onClick={() => setActiveCat(cat)}
                 style={{
                   ...styles.catBtn,
-                  background: activeCat === cat ? "#2563eb" : "#111827",
+                  background: activeCat === cat ? "#e5e7eb" : "#202020",
+                  color: activeCat === cat ? "#2563eb" : "white",
                 }}
               >
-                {cat}
+                {cat === "TẤT CẢ" ? "🛒 TẤT CẢ SẢN PHẨM" : `🎵 ${cat}`}
               </button>
             ))}
           </div>
 
-          <div style={styles.productGrid}>
+          <div style={styles.productTable}>
+            <div style={styles.groupTitle}>
+              <img src="/tiktok-logo.png" style={styles.groupIcon} />
+              TT Việt
+            </div>
+
+            <div style={styles.tableHead}>
+              <div>Sản phẩm</div>
+              <div>Hiện có</div>
+              <div>Giá</div>
+              <div>Thao tác</div>
+            </div>
+
             {filteredProducts.map((p) => (
-              <div key={p.id} style={styles.card}>
-                <div style={styles.productName}>{p.name}</div>
-
-                <p style={styles.desc}>
-                  Bảo hành 6 tiếng tính từ lúc mua. Hàng tự động giao ngay.
-                </p>
-
-                <div style={styles.infoRow}>
-                  <span>Kho:</span>
-                  <b style={{ color: p.stock > 0 ? "#16a34a" : "#dc2626" }}>
-                    {p.stock}
-                  </b>
+              <div key={p.id} style={styles.tableRow}>
+                <div style={styles.productInfo}>
+                  <img src="/tiktok-logo.png" style={styles.productLogo} />
+                  <div>
+                    <div style={styles.productName}>{p.name}</div>
+                    <div style={styles.desc}>
+                      Bảo hành 6 tiếng tính từ lúc mua. Hàng tự động giao ngay.
+                    </div>
+                  </div>
                 </div>
 
-                <div style={styles.price}>
-                  {p.price.toLocaleString("vi-VN")}đ
-                </div>
+                <div style={styles.stockBox}>Còn lại: <b>{p.stock}</b></div>
+                <div style={styles.priceBox}>💵 {p.price.toLocaleString("vi-VN")}đ</div>
 
                 <button
                   onClick={() => openBuyPopup(p)}
@@ -288,7 +278,7 @@ export default function Home() {
                     background: p.stock > 0 ? "#2563eb" : "#94a3b8",
                   }}
                 >
-                  {p.stock > 0 ? "MUA NGAY" : "HẾT HÀNG"}
+                  {p.stock > 0 ? "🛒 MUA NGAY" : "☹ HẾT HÀNG"}
                 </button>
               </div>
             ))}
@@ -302,12 +292,7 @@ export default function Home() {
         {buyProduct && (
           <div style={styles.modalOverlay}>
             <div style={styles.buyModal}>
-              <button
-                style={styles.closeModal}
-                onClick={() => setBuyProduct(null)}
-              >
-                ×
-              </button>
+              <button style={styles.closeModal} onClick={() => setBuyProduct(null)}>×</button>
 
               <h2 style={styles.modalTitle}>Thanh toán đơn hàng</h2>
 
@@ -325,9 +310,7 @@ export default function Home() {
                 style={styles.qtyInput}
               />
 
-              <button style={styles.discountBtn}>
-                Nhập mã giảm giá
-              </button>
+              <button style={styles.discountBtn}>Nhập mã giảm giá</button>
 
               <div style={styles.totalText}>
                 Tổng tiền cần thanh toán:{" "}
@@ -336,11 +319,7 @@ export default function Home() {
                 </b>
               </div>
 
-              <button
-                style={styles.payButton}
-                onClick={confirmBuy}
-                disabled={loadingBuy}
-              >
+              <button style={styles.payButton} onClick={confirmBuy} disabled={loadingBuy}>
                 💳 {loadingBuy ? "Đang xử lý..." : "Thanh toán"}
               </button>
             </div>
@@ -352,335 +331,61 @@ export default function Home() {
 }
 
 const styles: any = {
-  page: {
-    minHeight: "100vh",
-    background: "#f3f6fb",
-    fontFamily: "Arial, sans-serif",
-    display: "flex",
-  },
-  sidebar: {
-    width: 270,
-    minHeight: "100vh",
-    background: "linear-gradient(180deg,#1e3a8a,#172554)",
-    color: "white",
-    padding: 18,
-    position: "fixed",
-    left: 0,
-    top: 0,
-  },
-  logoBox: {
-    background: "white",
-    color: "#1e3a8a",
-    borderRadius: 14,
-    padding: 18,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  logo: {
-    fontSize: 30,
-    fontWeight: 900,
-  },
-  domain: {
-    fontSize: 13,
-    marginTop: 4,
-  },
-  balanceBox: {
-    background: "rgba(255,255,255,.12)",
-    border: "1px solid rgba(255,255,255,.2)",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  nav: {
-    display: "grid",
-    gap: 8,
-  },
-  navItem: {
-    color: "white",
-    textDecoration: "none",
-    padding: "12px 14px",
-    borderRadius: 10,
-    background: "rgba(255,255,255,.08)",
-    fontWeight: 700,
-  },
-  navButton: {
-    color: "white",
-    textDecoration: "none",
-    padding: "12px 14px",
-    borderRadius: 10,
-    background: "rgba(255,255,255,.08)",
-    fontWeight: 700,
-    border: 0,
-    textAlign: "left",
-    cursor: "pointer",
-    fontSize: 16,
-  },
-  main: {
-    marginLeft: 270,
-    width: "calc(100% - 270px)",
-  },
-  header: {
-    height: 76,
-    background: "white",
-    boxShadow: "0 2px 12px rgba(0,0,0,.08)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 28px",
-    position: "sticky",
-    top: 0,
-    zIndex: 10,
-  },
-  search: {
-    width: 360,
-    padding: "12px 14px",
-    borderRadius: 10,
-    border: "1px solid #cbd5e1",
-    fontSize: 15,
-  },
-  userArea: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    position: "relative",
-  },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 6,
-    border: "1px solid #1e3a8a",
-    background: "#1e3a8a",
-    color: "white",
-    fontWeight: 900,
-    cursor: "pointer",
-  },
-  bell: {
-    fontSize: 20,
-    opacity: 0.7,
-  },
-  userWrap: {
-    position: "relative",
-  },
-  userHead: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    cursor: "pointer",
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: "50%",
-    background: "#2563eb",
-    color: "white",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: 900,
-  },
-  userName: {
-    fontWeight: 700,
-    color: "#334155",
-  },
-  dropdown: {
-    position: "absolute",
-    top: 56,
-    right: 0,
-    width: 220,
-    background: "white",
-    borderRadius: 8,
-    boxShadow: "0 12px 30px rgba(0,0,0,.18)",
-    padding: "10px 0",
-    zIndex: 99,
-  },
-  dropItem: {
-    display: "block",
-    padding: "12px 18px",
-    color: "#334155",
-    textDecoration: "none",
-    fontSize: 14,
-  },
-  dropBtn: {
-    display: "block",
-    width: "100%",
-    padding: "12px 18px",
-    color: "#334155",
-    background: "white",
-    border: 0,
-    textAlign: "left",
-    fontSize: 14,
-    cursor: "pointer",
-  },
-  loginBtn: {
-    background: "#2563eb",
-    color: "white",
-    padding: "10px 16px",
-    borderRadius: 8,
-    textDecoration: "none",
-    fontWeight: 800,
-  },
-  content: {
-    padding: 24,
-  },
-  notice: {
-    background: "white",
-    border: "2px solid #2563eb",
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 20,
-    boxShadow: "0 6px 18px rgba(0,0,0,.06)",
-  },
-  categoryGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(6,1fr)",
-    gap: 10,
-    marginBottom: 22,
-  },
-  catBtn: {
-    color: "white",
-    border: 0,
-    borderRadius: 10,
-    padding: 16,
-    fontWeight: 900,
-    cursor: "pointer",
-  },
-  productGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))",
-    gap: 18,
-  },
-  card: {
-    background: "white",
-    borderRadius: 16,
-    padding: 20,
-    boxShadow: "0 6px 18px rgba(0,0,0,.08)",
-    border: "1px solid #e5e7eb",
-  },
-  productName: {
-    fontWeight: 900,
-    color: "#1d4ed8",
-    fontSize: 18,
-    minHeight: 44,
-  },
-  desc: {
-    color: "#64748b",
-    fontSize: 14,
-    lineHeight: 1.5,
-  },
-  infoRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginTop: 16,
-    paddingTop: 12,
-    borderTop: "1px solid #e5e7eb",
-  },
-  price: {
-    marginTop: 12,
-    fontSize: 22,
-    fontWeight: 900,
-    color: "#dc2626",
-  },
-  buyBtn: {
-    width: "100%",
-    marginTop: 16,
-    padding: "12px",
-    color: "white",
-    border: 0,
-    borderRadius: 10,
-    fontWeight: 900,
-    cursor: "pointer",
-  },
-  empty: {
-    background: "white",
-    padding: 20,
-    borderRadius: 12,
-  },
-
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,.45)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 9999,
-  },
-  buyModal: {
-    width: 520,
-    background: "white",
-    borderRadius: 8,
-    padding: 24,
-    position: "relative",
-    boxShadow: "0 15px 35px rgba(0,0,0,.25)",
-  },
-  closeModal: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    width: 30,
-    height: 30,
-    border: 0,
-    borderRadius: 6,
-    background: "#ef4444",
-    color: "white",
-    cursor: "pointer",
-    fontSize: 18,
-    fontWeight: 900,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 900,
-    marginBottom: 24,
-    color: "#334155",
-  },
-  label: {
-    display: "block",
-    marginBottom: 8,
-    fontWeight: 700,
-    color: "#334155",
-  },
-  productInput: {
-    background: "#e5e7eb",
-    padding: 14,
-    borderRadius: 6,
-    marginBottom: 18,
-    color: "#334155",
-  },
-  qtyInput: {
-    width: "100%",
-    padding: 14,
-    border: "1px solid #e5e7eb",
-    borderRadius: 6,
-    marginBottom: 18,
-    fontSize: 16,
-  },
-  discountBtn: {
-    float: "right",
-    background: "#ef4444",
-    color: "white",
-    border: 0,
-    borderRadius: 6,
-    padding: "12px 18px",
-    fontWeight: 900,
-    cursor: "pointer",
-    marginBottom: 20,
-  },
-  totalText: {
-    clear: "both",
-    textAlign: "center",
-    fontSize: 22,
-    margin: "28px 0",
-    color: "#334155",
-  },
-  payButton: {
-    width: "100%",
-    background: "#2563eb",
-    color: "white",
-    border: 0,
-    borderRadius: 6,
-    padding: 15,
-    fontSize: 17,
-    fontWeight: 900,
-    cursor: "pointer",
-  },
+  page: { minHeight: "100vh", background: "#eef3fb", fontFamily: "Arial, sans-serif", display: "flex" },
+  sidebar: { width: 260, minHeight: "100vh", background: "linear-gradient(180deg,#1e3a8a,#273247)", color: "white", padding: 16, position: "fixed", left: 0, top: 0 },
+  logoBox: { background: "white", color: "#1e3a8a", borderRadius: 6, padding: 14, marginBottom: 16 },
+  logoRow: { display: "flex", alignItems: "center", gap: 10 },
+  sideLogoImg: { width: 55, height: 55, objectFit: "contain" },
+  logo: { fontSize: 28, fontWeight: 900, lineHeight: 1 },
+  domain: { fontSize: 13, marginTop: 4, fontWeight: 700 },
+  smallText: { fontSize: 14, margin: "14px 0", fontWeight: 700 },
+  balanceLine: { fontSize: 14, margin: "22px 0", color: "#cbd5e1" },
+  nav: { display: "grid", gap: 8 },
+  navItem: { color: "white", textDecoration: "none", padding: "10px 12px", borderRadius: 8, fontWeight: 800 },
+  navButton: { color: "white", padding: "10px 12px", borderRadius: 8, background: "transparent", fontWeight: 800, border: 0, textAlign: "left", cursor: "pointer", fontSize: 15 },
+  main: { marginLeft: 260, width: "calc(100% - 260px)" },
+  header: { height: 72, background: "white", boxShadow: "0 2px 10px rgba(0,0,0,.08)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px", position: "sticky", top: 0, zIndex: 10 },
+  leftHeader: { display: "flex", alignItems: "center", gap: 18 },
+  menuBtn: { border: 0, background: "white", fontSize: 26, color: "#64748b", cursor: "pointer" },
+  search: { width: 360, padding: "12px 14px", borderRadius: 6, border: "1px solid #cbd5e1", fontSize: 15 },
+  userArea: { display: "flex", alignItems: "center", gap: 12, position: "relative" },
+  iconBtn: { width: 36, height: 36, borderRadius: 5, border: "1px solid #1e3a8a", background: "#1e3a8a", color: "white", fontWeight: 900, cursor: "pointer" },
+  bell: { fontSize: 20, opacity: 0.7 },
+  userWrap: { position: "relative" },
+  userHead: { display: "flex", alignItems: "center", gap: 10, cursor: "pointer" },
+  avatar: { width: 44, height: 44, borderRadius: "50%", background: "#2563eb", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900 },
+  userName: { fontWeight: 700, color: "#334155" },
+  dropdown: { position: "absolute", top: 56, right: 0, width: 220, background: "white", borderRadius: 8, boxShadow: "0 12px 30px rgba(0,0,0,.18)", padding: "10px 0", zIndex: 99 },
+  dropItem: { display: "block", padding: "12px 18px", color: "#334155", textDecoration: "none", fontSize: 14 },
+  dropBtn: { display: "block", width: "100%", padding: "12px 18px", color: "#334155", background: "white", border: 0, textAlign: "left", fontSize: 14, cursor: "pointer" },
+  loginBtn: { background: "#2563eb", color: "white", padding: "10px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 800 },
+  registerBtn: { background: "#16a34a", color: "white", padding: "10px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 800 },
+  content: { padding: 18 },
+  notice: { background: "white", border: "2px solid #2563eb", borderRadius: 4, padding: 24, marginBottom: 16, lineHeight: 1.45 },
+  blueBar: { background: "#2563eb", color: "white", textAlign: "right", padding: "10px 18px", borderRadius: 4, marginBottom: 28, fontWeight: 700 },
+  categoryGrid: { display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: 10, marginBottom: 22 },
+  catBtn: { border: 0, borderRadius: 6, padding: 18, fontWeight: 900, cursor: "pointer", boxShadow: "0 4px 10px rgba(0,0,0,.15)" },
+  productTable: { width: "100%", background: "white", borderRadius: 4, overflow: "hidden", border: "1px solid #cbd5e1" },
+  groupTitle: { background: "#1e3a8a", color: "white", padding: "14px 18px", fontWeight: 900, display: "flex", alignItems: "center", gap: 10 },
+  groupIcon: { width: 38, height: 38, objectFit: "cover", borderRadius: 4 },
+  tableHead: { display: "grid", gridTemplateColumns: "1fr 160px 170px 190px", background: "#1e3a8a", color: "white", fontWeight: 900, padding: "16px 20px", alignItems: "center" },
+  tableRow: { display: "grid", gridTemplateColumns: "1fr 160px 170px 190px", alignItems: "center", padding: "12px 20px", borderBottom: "1px solid #dbeafe", background: "#f8fbff" },
+  productInfo: { display: "flex", alignItems: "center", gap: 14 },
+  productLogo: { width: 48, height: 48, borderRadius: 8, objectFit: "cover" },
+  productName: { fontWeight: 900, color: "#1d4ed8", fontSize: 15 },
+  desc: { color: "#111827", fontSize: 13, lineHeight: 1.5, marginTop: 4 },
+  stockBox: { justifySelf: "center", border: "1px solid #06b6d4", color: "#0f766e", borderRadius: 6, padding: "7px 12px", background: "white" },
+  priceBox: { justifySelf: "center", border: "1px solid #ef4444", color: "#111827", borderRadius: 6, padding: "7px 12px", background: "white", fontWeight: 900 },
+  buyBtn: { width: "150px", padding: "10px", color: "white", border: 0, borderRadius: 6, fontWeight: 900, cursor: "pointer", justifySelf: "center" },
+  empty: { background: "white", padding: 20, borderRadius: 12 },
+  modalOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 },
+  buyModal: { width: 520, background: "white", borderRadius: 8, padding: 24, position: "relative", boxShadow: "0 15px 35px rgba(0,0,0,.25)" },
+  closeModal: { position: "absolute", top: 10, right: 10, width: 30, height: 30, border: 0, borderRadius: 6, background: "#ef4444", color: "white", cursor: "pointer", fontSize: 18, fontWeight: 900 },
+  modalTitle: { fontSize: 24, fontWeight: 900, marginBottom: 24, color: "#334155" },
+  label: { display: "block", marginBottom: 8, fontWeight: 700, color: "#334155" },
+  productInput: { background: "#e5e7eb", padding: 14, borderRadius: 6, marginBottom: 18, color: "#334155" },
+  qtyInput: { width: "100%", padding: 14, border: "1px solid #e5e7eb", borderRadius: 6, marginBottom: 18, fontSize: 16 },
+  discountBtn: { float: "right", background: "#ef4444", color: "white", border: 0, borderRadius: 6, padding: "12px 18px", fontWeight: 900, cursor: "pointer", marginBottom: 20 },
+  totalText: { clear: "both", textAlign: "center", fontSize: 22, margin: "28px 0", color: "#334155" },
+  payButton: { width: "100%", background: "#2563eb", color: "white", border: 0, borderRadius: 6, padding: 15, fontSize: 17, fontWeight: 900, cursor: "pointer" },
 };
