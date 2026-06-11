@@ -208,10 +208,26 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <a href="/login" style={styles.loginBtn}>
-              Đăng nhập
-            </a>
-          )}
+  <div style={{ display: "flex", gap: 10 }}>
+    <a href="/login" style={styles.loginBtn}>
+      Đăng nhập
+    </a>
+
+    <a
+      href="/register"
+      style={{
+        background: "#16a34a",
+        color: "white",
+        padding: "10px 16px",
+        borderRadius: 8,
+        textDecoration: "none",
+        fontWeight: 800,
+      }}
+    >
+      Đăng ký
+    </a>
+  </div>
+)}
         </header>
 
         <section style={styles.content}>
