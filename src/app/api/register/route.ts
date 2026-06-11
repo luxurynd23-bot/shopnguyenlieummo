@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
     if (existed) {
       return NextResponse.json(
-        { message: "Email da ton tai" },
+        { message: "Email đã tồn tại" },
         { status: 400 }
       );
     }
@@ -39,16 +39,22 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({
-      message: "Dang ky thanh cong",
+      message: "Đăng ký thành công",
       user: {
+        id: user.id,
         email: user.email,
         name: user.name,
         balance: user.balance,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("REGISTER_ERROR:", error);
+
     return NextResponse.json(
-      { message: "Loi dang ky" },
+      {
+        message: "Lỗi đăng ký",
+        error: error?.message || String(error),
+      },
       { status: 500 }
     );
   }
