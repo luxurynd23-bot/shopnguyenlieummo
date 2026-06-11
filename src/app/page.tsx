@@ -157,6 +157,7 @@ export default function Home() {
           <a href="/orders" style={styles.navItem}>📋 Lịch Sử Mua Hàng</a>
           <a href="/deposit" style={styles.navItem}>🏦 Ngân Hàng</a>
           <a href="/deposit-history" style={styles.navItem}>🧾 Hoá Đơn</a>
+          <a href="/rank">🏆 Bảng Xếp Hạng</a>
           <a href="/settings" style={styles.navItem}>⚙️ Cài Đặt</a>
           <button onClick={logout} style={styles.navButton}>↪ Đăng xuất</button>
 
