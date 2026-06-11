@@ -123,7 +123,14 @@ export default function Home() {
           <div style={styles.logoRow}>
             <img src="/tiktok-logo.png" style={styles.sideLogoImg} />
             <div>
-              <div style={styles.logo}>{settings.shopName}</div>
+              <img
+  src="/tiktok-logo.png"
+  style={{
+    width: 80,
+    height: 80,
+    objectFit: "contain",
+  }}
+/>
               <div style={styles.domain}>{settings.shopDomain}</div>
             </div>
           </div>
@@ -233,8 +240,8 @@ export default function Home() {
                 onClick={() => setActiveCat(cat)}
                 style={{
                   ...styles.catBtn,
-                  background: activeCat === cat ? "#e5e7eb" : "#202020",
-                  color: activeCat === cat ? "#2563eb" : "white",
+                  background: activeCat === cat ? "#ffffff" : "#111111",
+                  color: activeCat === cat ? "#111111" : "#ffffff",
                 }}
               >
                 {cat === "TẤT CẢ" ? "🛒 TẤT CẢ SẢN PHẨM" : `🎵 ${cat}`}
@@ -332,11 +339,16 @@ export default function Home() {
 
 const styles: any = {
   page: { minHeight: "100vh", background: "#eef3fb", fontFamily: "Arial, sans-serif", display: "flex" },
-  sidebar: { width: 260, minHeight: "100vh", background: "linear-gradient(180deg,#1e3a8a,#273247)", color: "white", padding: 16, position: "fixed", left: 0, top: 0 },
-  logoBox: { background: "white", color: "#1e3a8a", borderRadius: 6, padding: 14, marginBottom: 16 },
+  sidebar: { width: 260, minHeight: "100vh", background: "linear-gradient(180deg,#111111,#000000)", color: "white", padding: 16, position: "fixed", left: 0, top: 0 },
+  logoBox: { background: "#ffffff",
+borderBottom: "1px solid #e5e5e5", color: "#1e3a8a", borderRadius: 6, padding: 14, marginBottom: 16 },
   logoRow: { display: "flex", alignItems: "center", gap: 10 },
   sideLogoImg: { width: 55, height: 55, objectFit: "contain" },
-  logo: { fontSize: 28, fontWeight: 900, lineHeight: 1 },
+logo: {
+  fontSize: 26,
+  fontWeight: 900,
+  color: "#111111",
+}
   domain: { fontSize: 13, marginTop: 4, fontWeight: 700 },
   smallText: { fontSize: 14, margin: "14px 0", fontWeight: 700 },
   balanceLine: { fontSize: 14, margin: "22px 0", color: "#cbd5e1" },
@@ -344,42 +356,51 @@ const styles: any = {
   navItem: { color: "white", textDecoration: "none", padding: "10px 12px", borderRadius: 8, fontWeight: 800 },
   navButton: { color: "white", padding: "10px 12px", borderRadius: 8, background: "transparent", fontWeight: 800, border: 0, textAlign: "left", cursor: "pointer", fontSize: 15 },
   main: { marginLeft: 260, width: "calc(100% - 260px)" },
-  header: { height: 72, background: "white", boxShadow: "0 2px 10px rgba(0,0,0,.08)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px", position: "sticky", top: 0, zIndex: 10 },
+  header: { height: 72, background: "#ffffff",
+borderBottom: "1px solid #e5e5e5", boxShadow: "0 2px 10px rgba(0,0,0,.08)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px", position: "sticky", top: 0, zIndex: 10 },
   leftHeader: { display: "flex", alignItems: "center", gap: 18 },
-  menuBtn: { border: 0, background: "white", fontSize: 26, color: "#64748b", cursor: "pointer" },
+  menuBtn: { border: 0, background: "#ffffff",
+borderBottom: "1px solid #e5e5e5", fontSize: 26, color: "#64748b", cursor: "pointer" },
   search: { width: 360, padding: "12px 14px", borderRadius: 6, border: "1px solid #cbd5e1", fontSize: 15 },
   userArea: { display: "flex", alignItems: "center", gap: 12, position: "relative" },
-  iconBtn: { width: 36, height: 36, borderRadius: 5, border: "1px solid #1e3a8a", background: "#1e3a8a", color: "white", fontWeight: 900, cursor: "pointer" },
+  iconBtn: { width: 36, height: 36, borderRadius: 5, border: "1px solid #1e3a8a", background: "#111111", color: "white", fontWeight: 900, cursor: "pointer" },
   bell: { fontSize: 20, opacity: 0.7 },
   userWrap: { position: "relative" },
   userHead: { display: "flex", alignItems: "center", gap: 10, cursor: "pointer" },
-  avatar: { width: 44, height: 44, borderRadius: "50%", background: "#2563eb", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900 },
+  avatar: { width: 44, height: 44, borderRadius: "50%", background: "#111111", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900 },
   userName: { fontWeight: 700, color: "#334155" },
-  dropdown: { position: "absolute", top: 56, right: 0, width: 220, background: "white", borderRadius: 8, boxShadow: "0 12px 30px rgba(0,0,0,.18)", padding: "10px 0", zIndex: 99 },
+  dropdown: { position: "absolute", top: 56, right: 0, width: 220, background: "#ffffff",
+borderBottom: "1px solid #e5e5e5", borderRadius: 8, boxShadow: "0 12px 30px rgba(0,0,0,.18)", padding: "10px 0", zIndex: 99 },
   dropItem: { display: "block", padding: "12px 18px", color: "#334155", textDecoration: "none", fontSize: 14 },
-  dropBtn: { display: "block", width: "100%", padding: "12px 18px", color: "#334155", background: "white", border: 0, textAlign: "left", fontSize: 14, cursor: "pointer" },
-  loginBtn: { background: "#2563eb", color: "white", padding: "10px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 800 },
+  dropBtn: { display: "block", width: "100%", padding: "12px 18px", color: "#334155", background: "#ffffff",
+borderBottom: "1px solid #e5e5e5", border: 0, textAlign: "left", fontSize: 14, cursor: "pointer" },
+  loginBtn: { background: "#111111", color: "white", padding: "10px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 800 },
   registerBtn: { background: "#16a34a", color: "white", padding: "10px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 800 },
   content: { padding: 18 },
-  notice: { background: "white", border: "2px solid #2563eb", borderRadius: 4, padding: 24, marginBottom: 16, lineHeight: 1.45 },
-  blueBar: { background: "#2563eb", color: "white", textAlign: "right", padding: "10px 18px", borderRadius: 4, marginBottom: 28, fontWeight: 700 },
+  notice: { background: "#ffffff",
+borderBottom: "1px solid #e5e5e5", border: "2px solid #2563eb", borderRadius: 4, padding: 24, marginBottom: 16, lineHeight: 1.45 },
+  blueBar: { background: "#111111", color: "white", textAlign: "right", padding: "10px 18px", borderRadius: 4, marginBottom: 28, fontWeight: 700 },
   categoryGrid: { display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: 10, marginBottom: 22 },
   catBtn: { border: 0, borderRadius: 6, padding: 18, fontWeight: 900, cursor: "pointer", boxShadow: "0 4px 10px rgba(0,0,0,.15)" },
-  productTable: { width: "100%", background: "white", borderRadius: 4, overflow: "hidden", border: "1px solid #cbd5e1" },
-  groupTitle: { background: "#1e3a8a", color: "white", padding: "14px 18px", fontWeight: 900, display: "flex", alignItems: "center", gap: 10 },
+  productTable: { width: "100%", background: "#ffffff",
+borderBottom: "1px solid #e5e5e5", borderRadius: 4, overflow: "hidden", border: "1px solid #cbd5e1" },
+  groupTitle: { background: "#111111", color: "white", padding: "14px 18px", fontWeight: 900, display: "flex", alignItems: "center", gap: 10 },
   groupIcon: { width: 38, height: 38, objectFit: "cover", borderRadius: 4 },
-  tableHead: { display: "grid", gridTemplateColumns: "1fr 160px 170px 190px", background: "#1e3a8a", color: "white", fontWeight: 900, padding: "16px 20px", alignItems: "center" },
+  tableHead: { display: "grid", gridTemplateColumns: "1fr 160px 170px 190px", background: "#111111", color: "white", fontWeight: 900, padding: "16px 20px", alignItems: "center" },
   tableRow: { display: "grid", gridTemplateColumns: "1fr 160px 170px 190px", alignItems: "center", padding: "12px 20px", borderBottom: "1px solid #dbeafe", background: "#f8fbff" },
   productInfo: { display: "flex", alignItems: "center", gap: 14 },
   productLogo: { width: 48, height: 48, borderRadius: 8, objectFit: "cover" },
   productName: { fontWeight: 900, color: "#1d4ed8", fontSize: 15 },
   desc: { color: "#111827", fontSize: 13, lineHeight: 1.5, marginTop: 4 },
   stockBox: { justifySelf: "center", border: "1px solid #06b6d4", color: "#0f766e", borderRadius: 6, padding: "7px 12px", background: "white" },
-  priceBox: { justifySelf: "center", border: "1px solid #ef4444", color: "#111827", borderRadius: 6, padding: "7px 12px", background: "white", fontWeight: 900 },
+  priceBox: { justifySelf: "center", border: "1px solid #ef4444", color: "#111827", borderRadius: 6, padding: "7px 12px", background: "#ffffff",
+borderBottom: "1px solid #e5e5e5", fontWeight: 900 },
   buyBtn: { width: "150px", padding: "10px", color: "white", border: 0, borderRadius: 6, fontWeight: 900, cursor: "pointer", justifySelf: "center" },
-  empty: { background: "white", padding: 20, borderRadius: 12 },
+  empty: { background: "#ffffff",
+borderBottom: "1px solid #e5e5e5", padding: 20, borderRadius: 12 },
   modalOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 },
-  buyModal: { width: 520, background: "white", borderRadius: 8, padding: 24, position: "relative", boxShadow: "0 15px 35px rgba(0,0,0,.25)" },
+  buyModal: { width: 520, background: "#ffffff",
+borderBottom: "1px solid #e5e5e5", borderRadius: 8, padding: 24, position: "relative", boxShadow: "0 15px 35px rgba(0,0,0,.25)" },
   closeModal: { position: "absolute", top: 10, right: 10, width: 30, height: 30, border: 0, borderRadius: 6, background: "#ef4444", color: "white", cursor: "pointer", fontSize: 18, fontWeight: 900 },
   modalTitle: { fontSize: 24, fontWeight: 900, marginBottom: 24, color: "#334155" },
   label: { display: "block", marginBottom: 8, fontWeight: 700, color: "#334155" },
@@ -387,5 +408,5 @@ const styles: any = {
   qtyInput: { width: "100%", padding: 14, border: "1px solid #e5e7eb", borderRadius: 6, marginBottom: 18, fontSize: 16 },
   discountBtn: { float: "right", background: "#ef4444", color: "white", border: 0, borderRadius: 6, padding: "12px 18px", fontWeight: 900, cursor: "pointer", marginBottom: 20 },
   totalText: { clear: "both", textAlign: "center", fontSize: 22, margin: "28px 0", color: "#334155" },
-  payButton: { width: "100%", background: "#2563eb", color: "white", border: 0, borderRadius: 6, padding: 15, fontSize: 17, fontWeight: 900, cursor: "pointer" },
+  payButton: { width: "100%", background: "#111111", color: "white", border: 0, borderRadius: 6, padding: 15, fontSize: 17, fontWeight: 900, cursor: "pointer" },
 };
