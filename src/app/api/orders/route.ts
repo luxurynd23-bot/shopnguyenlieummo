@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
     const cookie = req.headers.get("cookie") || "";
+
     const token = cookie
       .split("; ")
       .find((c) => c.startsWith("token="))
       ?.split("=")[1];
 
     if (!token) {
-      return NextResponse.json({ orders: [] });
+      return NextResponse.json(
+        { orders: [] },
+        { status: 401 }
+      );
     }
 
     const decoded: any = jwt.verify(
@@ -22,12 +24,28 @@ export async function GET(req: Request) {
     );
 
     const orders = await prisma.order.findMany({
-      where: { userId: decoded.id },
-      orderBy: { createdAt: "desc" },
+      where: {
+        userId: decoded.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        productName: true,
+        amount: true,
+        status: true,
+        createdAt: true,
+      },
     });
 
-    return NextResponse.json({ orders });
+    return NextResponse.json({
+      orders,
+    });
   } catch {
-    return NextResponse.json({ orders: [] });
+    return NextResponse.json(
+      { orders: [] },
+      { status: 401 }
+    );
   }
 }

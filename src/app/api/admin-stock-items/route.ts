@@ -5,53 +5,89 @@ import jwt from "jsonwebtoken";
 const prisma = new PrismaClient();
 
 async function checkAdmin(req: Request) {
-  const cookie = req.headers.get("cookie") || "";
-  const token = cookie.split("; ").find((c) => c.startsWith("token="))?.split("=")[1];
-  if (!token) return false;
+  try {
+    const cookie = req.headers.get("cookie") || "";
+    const token = cookie
+      .split("; ")
+      .find((c) => c.startsWith("token="))
+      ?.split("=")[1];
 
-  const decoded: any = jwt.verify(token, process.env.JWT_SECRET || "shop_mmo_secret_123456");
+    if (!token) return false;
 
-  const user = await prisma.user.findUnique({
-    where: { id: decoded.id },
-    select: { role: true },
-  });
+    const decoded: any = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "shop_mmo_secret_123456"
+    );
 
-  return user?.role === "ADMIN";
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: { role: true },
+    });
+
+    return user?.role === "ADMIN";
+  } catch {
+    return false;
+  }
 }
 
 export async function GET(req: Request) {
   if (!(await checkAdmin(req))) {
-    return NextResponse.json({ message: "Khong co quyen" }, { status: 403 });
+    return NextResponse.json({ message: "Không có quyền" }, { status: 403 });
   }
 
-  const items = await prisma.accountItem.findMany({
-    orderBy: { createdAt: "desc" },
-  });
+  try {
+    const items = await prisma.accountItem.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        product: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
 
-  const products = await prisma.product.findMany();
-
-  const result = items.map((item) => {
-    const product = products.find((p) => p.id === item.productId);
-
-    return {
+    const result = items.map((item: any) => ({
       ...item,
-      productName: product?.name || "Không rõ",
-    };
-  });
+      productName: item.product?.name || "Không rõ",
+    }));
 
-  return NextResponse.json({ items: result });
+    return NextResponse.json({ items: result });
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        message: "Lỗi tải kho tài khoản",
+        error: error?.message || String(error),
+      },
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(req: Request) {
   if (!(await checkAdmin(req))) {
-    return NextResponse.json({ message: "Khong co quyen" }, { status: 403 });
+    return NextResponse.json({ message: "Không có quyền" }, { status: 403 });
   }
 
-  const body = await req.json();
+  try {
+    const body = await req.json();
 
-  await prisma.accountItem.delete({
-    where: { id: body.id },
-  });
+    if (!body.id) {
+      return NextResponse.json({ message: "Thiếu ID" }, { status: 400 });
+    }
 
-  return NextResponse.json({ message: "Da xoa tai khoan kho" });
+    await prisma.accountItem.delete({
+      where: { id: body.id },
+    });
+
+    return NextResponse.json({ message: "Đã xóa tài khoản kho" });
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        message: "Lỗi xóa tài khoản kho",
+        error: error?.message || String(error),
+      },
+      { status: 500 }
+    );
+  }
 }

@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import { PayOS } from "@payos/node";
 import jwt from "jsonwebtoken";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 const payos = new PayOS({
   clientId: process.env.PAYOS_CLIENT_ID || "",
@@ -20,10 +18,7 @@ export async function POST(req: Request) {
       ?.split("=")[1];
 
     if (!token) {
-      return NextResponse.json(
-        { message: "Chua dang nhap" },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "Chưa đăng nhập" }, { status: 401 });
     }
 
     const decoded: any = jwt.verify(
@@ -36,11 +31,12 @@ export async function POST(req: Request) {
 
     if (!money || money < 10000) {
       return NextResponse.json(
-        { message: "So tien toi thieu la 10000d" },
+        { message: "Số tiền tối thiểu là 10.000đ" },
         { status: 400 }
       );
     }
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
     const orderCode = Number(String(Date.now()).slice(-10));
 
     await prisma.deposit.create({
@@ -55,18 +51,29 @@ export async function POST(req: Request) {
     const paymentLink = await payos.paymentRequests.create({
       orderCode,
       amount: money,
-      description: "Nap tien MMO",
-      returnUrl: "http://localhost:3000/wallet",
-      cancelUrl: "http://localhost:3000/deposit",
+      description: `NAP${orderCode}`,
+      returnUrl: `${appUrl}/wallet`,
+      cancelUrl: `${appUrl}/deposit`,
+      items: [
+        {
+          name: "Nạp tiền vào ví",
+          quantity: 1,
+          price: money,
+        },
+      ],
     });
 
-    return NextResponse.json(paymentLink);
+    return NextResponse.json({
+      message: "Tạo thanh toán thành công",
+      orderCode,
+      checkoutUrl: paymentLink.checkoutUrl,
+      paymentUrl: paymentLink.checkoutUrl,
+      qrCode: paymentLink.qrCode,
+    });
   } catch (error: any) {
-    console.error("PAYOS ERROR:", error);
-
     return NextResponse.json(
       {
-        message: "Loi PayOS",
+        message: "Lỗi tạo thanh toán PayOS",
         error: error?.message || String(error),
       },
       { status: 500 }

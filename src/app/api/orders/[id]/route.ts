@@ -1,8 +1,6 @@
 ﻿import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 async function getUserFromToken(req: Request) {
   const cookie = req.headers.get("cookie") || "";
@@ -19,15 +17,13 @@ async function getUserFromToken(req: Request) {
       process.env.JWT_SECRET || "shop_mmo_secret_123456"
     );
 
-    const user = await prisma.user.findUnique({
+    return await prisma.user.findUnique({
       where: { id: decoded.id },
       select: {
         id: true,
         role: true,
       },
     });
-
-    return user;
   } catch {
     return null;
   }
@@ -35,15 +31,14 @@ async function getUserFromToken(req: Request) {
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } | Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const resolvedParams = await params;
-    const id = resolvedParams.id;
+    const { id } = await context.params;
 
     if (!id) {
       return NextResponse.json(
-        { message: "ID don hang khong hop le" },
+        { message: "ID đơn hàng không hợp lệ" },
         { status: 400 }
       );
     }
@@ -51,31 +46,33 @@ export async function GET(
     const user = await getUserFromToken(req);
 
     if (!user) {
-      return NextResponse.json(
-        { message: "Chua dang nhap" },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "Chưa đăng nhập" }, { status: 401 });
     }
 
     const order = await prisma.order.findFirst({
       where: {
         id,
-        OR: [
-          { userId: user.id },
-          ...(user.role === "ADMIN" ? [{}] : []),
-        ],
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {}),
+      },
+      select: {
+        id: true,
+        userId: true,
+        productId: true,
+        productName: true,
+        amount: true,
+        content: true,
+        status: true,
+        createdAt: true,
       },
     });
 
     if (!order) {
       return NextResponse.json(
-        { message: "Khong tim thay don hang" },
+        { message: "Không tìm thấy đơn hàng" },
         { status: 404 }
       );
     }
 
-    // CHỈ lấy tài khoản của đúng đơn hàng này
-    // Không lấy theo productId nữa
     const accounts = String(order.content || "")
       .split(/\r?\n/)
       .map((x) => x.trim())
@@ -88,7 +85,7 @@ export async function GET(
   } catch (error: any) {
     return NextResponse.json(
       {
-        message: "Loi lay chi tiet don hang",
+        message: "Lỗi lấy chi tiết đơn hàng",
         error: error?.message || String(error),
       },
       { status: 500 }

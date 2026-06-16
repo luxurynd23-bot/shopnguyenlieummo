@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
     const cookie = req.headers.get("cookie") || "";
+
     const token = cookie
       .split("; ")
       .find((c) => c.startsWith("token="))
       ?.split("=")[1];
 
     if (!token) {
-      return NextResponse.json({ user: null }, { status: 401 });
+      return NextResponse.json(
+        { user: null },
+        { status: 401 }
+      );
     }
 
     const decoded: any = jwt.verify(
@@ -22,18 +24,49 @@ export async function GET(req: Request) {
     );
 
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
+      where: {
+        id: decoded.id,
+      },
       select: {
         id: true,
         email: true,
         name: true,
         balance: true,
+        totalDeposit: true,
+        referralBalance: true,
+        referralCode: true,
+        referredBy: true,
         role: true,
+        vipLevel: true,
+        isBanned: true,
+        createdAt: true,
       },
     });
 
-    return NextResponse.json({ user });
+    if (!user) {
+      return NextResponse.json(
+        { user: null },
+        { status: 401 }
+      );
+    }
+
+    if (user.isBanned) {
+      return NextResponse.json(
+        {
+          user: null,
+          message: "Tài khoản đã bị khóa",
+        },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json({
+      user,
+    });
   } catch {
-    return NextResponse.json({ user: null }, { status: 401 });
+    return NextResponse.json(
+      { user: null },
+      { status: 401 }
+    );
   }
 }

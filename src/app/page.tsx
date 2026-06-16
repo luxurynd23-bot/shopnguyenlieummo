@@ -19,32 +19,67 @@ export default function Home() {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const [buyProduct, setBuyProduct] = useState<any>(null);
-  const [buyQty, setBuyQty] = useState(1);
-  const [loadingBuy, setLoadingBuy] = useState(false);
+const [buyQty, setBuyQty] = useState(1);
+const [loadingBuy, setLoadingBuy] = useState(false);
+
+const [couponCode, setCouponCode] = useState("");
+const [coupon, setCoupon] = useState<any>(null);
 
   const [settings, setSettings] = useState<any>({
-    shopName: "ShopMMC",
-    shopDomain: "shopnguyenlieummo.in",
+    shopName: "SHOP MMO",
+    shopDomain: "shopnguyenlieummo",
     warrantyText: "Bảo hành 6 giờ kể từ thời điểm giao tài khoản.",
     noticeText: "Sau khi mua, hệ thống tự động trừ số dư và giao tài khoản.",
   });
 
-  async function loadData() {
-    try {
-      const resUser = await fetch("/api/me");
+  const [activity, setActivity] = useState<any>({
+    orders: [],
+    deposits: [],
+  });
+const [stats, setStats] = useState({
+  totalUsers: 0,
+  totalOrders: 0,
+  stockLeft: 0,
+  totalDeposit: 0,
+});
+const [topDeposits, setTopDeposits] = useState<any[]>([]);
+const [topOrders, setTopOrders] = useState<any[]>([]);
+async function loadData() {
+  try {
+    const resUser = await fetch("/api/me");
+
+    if (resUser.ok) {
       const dataUser = await resUser.json();
       setUser(dataUser.user || null);
+    } else {
+      setUser(null);
+    }
+  } catch {
+    setUser(null);
+  }
 
-      const resProducts = await fetch("/api/products");
+  try {
+    const resProducts = await fetch("/api/products");
+
+    if (resProducts.ok) {
       const dataProducts = await resProducts.json();
       setProducts(dataProducts.products || []);
+    } else {
+      setProducts([]);
+    }
+  } catch {
+    setProducts([]);
+  }
 
-      const resSettings = await fetch("/api/admin-settings");
+  try {
+    const resSettings = await fetch("/api/public-settings");
+
+    if (resSettings.ok) {
       const dataSettings = await resSettings.json();
 
       setSettings({
-        shopName: dataSettings.settings?.shopName || "ShopMMC",
-        shopDomain: dataSettings.settings?.shopDomain || "shopnguyenlieummo.in",
+        shopName: dataSettings.settings?.shopName || "SHOP MMO",
+        shopDomain: dataSettings.settings?.shopDomain || "shopnguyenlieummo",
         warrantyText:
           dataSettings.settings?.warrantyText ||
           "Bảo hành 6 giờ kể từ thời điểm giao tài khoản.",
@@ -52,10 +87,65 @@ export default function Home() {
           dataSettings.settings?.noticeText ||
           "Sau khi mua, hệ thống tự động trừ số dư và giao tài khoản.",
       });
-    } catch (err) {
-      console.error(err);
     }
+  } catch {
+    // bỏ qua lỗi settings để trang chủ không bị chết
   }
+
+  try {
+    const resActivity = await fetch("/api/public-activity");
+
+    if (resActivity.ok) {
+      const dataActivity = await resActivity.json();
+
+      setActivity({
+        orders: dataActivity.orders || [],
+        deposits: dataActivity.deposits || [],
+      });
+    }
+  } catch {
+    // bỏ qua lỗi activity để trang chủ không bị chết
+  }
+
+  try {
+    const resStats = await fetch("/api/public-stats");
+
+    if (resStats.ok) {
+      const dataStats = await resStats.json();
+
+      setStats({
+        totalUsers: dataStats.totalUsers || 0,
+        totalOrders: dataStats.totalOrders || 0,
+        stockLeft: dataStats.stockLeft || 0,
+        totalDeposit: dataStats.totalDeposit || 0,
+      });
+    }
+  } catch {
+    // bỏ qua lỗi stats để trang chủ không bị chết
+  }
+
+  try {
+    const resTop = await fetch("/api/public-top");
+
+    if (resTop.ok) {
+      const dataTop = await resTop.json();
+      setTopDeposits(dataTop.topDeposits || []);
+    }
+  } catch {
+    // bỏ qua lỗi top nạp để trang chủ không bị chết
+  }
+
+  try {
+    const resTopOrders = await fetch("/api/public-top-orders");
+
+    if (resTopOrders.ok) {
+      const dataTopOrders = await resTopOrders.json();
+      setTopOrders(dataTopOrders.topOrders || []);
+    }
+  } catch {
+    // bỏ qua lỗi top mua để trang chủ không bị chết
+  }
+}
 
   useEffect(() => {
     loadData();
@@ -70,6 +160,36 @@ export default function Home() {
 
     setBuyProduct(product);
     setBuyQty(1);
+    setCouponCode("");
+    setCoupon(null);
+  }
+
+  async function checkCoupon() {
+    if (!couponCode.trim()) {
+      alert("Nhập mã giảm giá trước");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setCoupon(data.coupon);
+        alert("Áp dụng mã thành công");
+      } else {
+        setCoupon(null);
+        alert(data.message || "Mã không hợp lệ");
+      }
+    } catch {
+      setCoupon(null);
+      alert("Lỗi kết nối khi kiểm tra mã");
+    }
   }
 
   async function confirmBuy() {
@@ -94,6 +214,7 @@ export default function Home() {
         body: JSON.stringify({
           productId: buyProduct.id,
           quantity: buyQty,
+          couponCode: coupon?.code || "",
         }),
       });
 
@@ -122,7 +243,37 @@ export default function Home() {
     await fetch("/api/logout", { method: "POST" });
     window.location.href = "/login";
   }
+function getUserRank(totalDeposit: number) {
+  if (totalDeposit >= 10000000) {
+    return "💎 Kim Cương";
+  }
 
+  if (totalDeposit >= 2000000) {
+    return "🥇 Vàng";
+  }
+
+  if (totalDeposit >= 500000) {
+    return "🥈 Bạc";
+  }
+
+  return "🥉 Đồng";
+}
+
+function getNextRankInfo(totalDeposit: number) {
+  if (totalDeposit < 500000) {
+    return { nextRank: "🥈 Bạc", need: 500000 - totalDeposit };
+  }
+
+  if (totalDeposit < 2000000) {
+    return { nextRank: "🥇 Vàng", need: 2000000 - totalDeposit };
+  }
+
+  if (totalDeposit < 10000000) {
+    return { nextRank: "💎 Kim Cương", need: 10000000 - totalDeposit };
+  }
+
+  return { nextRank: "MAX", need: 0 };
+}
   const filteredProducts = products.filter((p) => {
     const matchKeyword = p.name.toLowerCase().includes(keyword.toLowerCase());
     const matchCat =
@@ -130,6 +281,14 @@ export default function Home() {
       p.name.toUpperCase().includes(activeCat.replace(" VIỆT", ""));
     return matchKeyword && matchCat;
   });
+
+  const totalPrice = buyProduct ? buyProduct.price * buyQty : 0;
+  const discountAmount = coupon
+    ? coupon.type === "PERCENT"
+      ? Math.floor((totalPrice * Number(coupon.value || 0)) / 100)
+      : Number(coupon.value || 0)
+    : 0;
+  const finalPrice = Math.max(totalPrice - discountAmount, 0);
 
   return (
     <div style={styles.page}>
@@ -150,13 +309,46 @@ export default function Home() {
           Số dư: <b>{(user?.balance || 0).toLocaleString("vi-VN")}đ</b> - Giảm:{" "}
           <b style={{ color: "#ff2b6d" }}>0%</b>
         </div>
+{user?.role === "ADMIN" && (
+  <div style={styles.adminPanel}>
+    <div style={styles.adminTitle}>⚡ QUẢN TRỊ NHANH</div>
 
+    <a href="/admin/dashboard" style={styles.adminBtn}>
+      📊 Dashboard
+    </a>
+
+    <a href="/admin" style={styles.adminBtn}>
+      📦 Sản phẩm
+    </a>
+
+    <a href="/admin/stock" style={styles.adminBtn}>
+      📥 Nhập kho
+    </a>
+
+    <a href="/admin/orders" style={styles.adminBtn}>
+      📋 Đơn hàng
+    </a>
+
+    <a href="/admin/users" style={styles.adminBtn}>
+      👤 Users
+    </a>
+
+    <a href="/admin/tickets" style={styles.adminBtn}>
+      🎫 Tickets
+    </a>
+
+    <a href="/admin/settings" style={styles.adminBtn}>
+      ⚙️ Cài đặt
+    </a>
+  </div>
+)}
         <nav style={styles.nav}>
           <a href="/" style={styles.navActive}>🏠 Trang Chủ</a>
           <a href="/" style={styles.navItem}>🛒 Mua Tài Khoản</a>
           <a href="/orders" style={styles.navItem}>📋 Lịch Sử Mua Hàng</a>
           <a href="/deposit" style={styles.navItem}>🏦 Ngân Hàng</a>
           <a href="/deposit-history" style={styles.navItem}>🧾 Hoá Đơn</a>
+          <a href="/support" style={styles.navItem}>🎫 Hỗ Trợ</a>
           <a href="/rank">🏆 Bảng Xếp Hạng</a>
           <a href="/settings" style={styles.navItem}>⚙️ Cài Đặt</a>
           <button onClick={logout} style={styles.navButton}>↪ Đăng xuất</button>
@@ -224,6 +416,88 @@ export default function Home() {
         </header>
 
         <section style={styles.content}>
+          {user?.role === "ADMIN" && (
+  <div style={styles.statsGrid}>
+    <div style={styles.statCard}>
+      👤 {stats.totalUsers.toLocaleString("vi-VN")}
+      <div style={{ fontSize: 13, marginTop: 8 }}>
+        Người dùng
+      </div>
+    </div>
+
+    <div style={styles.statCard}>
+      📦 {stats.totalOrders.toLocaleString("vi-VN")}
+      <div style={{ fontSize: 13, marginTop: 8 }}>
+        Đơn hàng
+      </div>
+    </div>
+
+    <div style={styles.statCard}>
+      💰 {stats.totalDeposit.toLocaleString("vi-VN")}đ
+      <div style={{ fontSize: 13, marginTop: 8 }}>
+        Tổng nạp
+      </div>
+    </div>
+
+    <div style={styles.statCard}>
+      📥 {stats.stockLeft.toLocaleString("vi-VN")}
+      <div style={{ fontSize: 13, marginTop: 8 }}>
+        Tồn kho
+      </div>
+    </div>
+  </div>
+)}
+{user && user.role !== "ADMIN" && (
+  <div style={styles.statsGrid}>
+    <div style={styles.statCard}>
+      💰 {(user.balance || 0).toLocaleString("vi-VN")}đ
+      <div style={{ fontSize: 13, marginTop: 8 }}>
+        Số dư của tôi
+      </div>
+    </div>
+
+    <div style={styles.statCard}>
+      💵 {(user.totalDeposit || 0).toLocaleString("vi-VN")}đ
+      <div style={{ fontSize: 13, marginTop: 8 }}>
+        Tổng đã nạp
+      </div>
+    </div>
+
+    <div style={styles.statCard}>
+  🏆 {getUserRank(user.totalDeposit || 0)}
+      <div style={{ fontSize: 13, marginTop: 8 }}>
+  Hạng tài khoản
+</div>
+    </div>
+
+    <div style={styles.statCard}>
+      📅 {new Date(user.createdAt).toLocaleDateString("vi-VN")}
+      <div style={{ fontSize: 13, marginTop: 8 }}>
+        Ngày tham gia
+      </div>
+    </div>
+  </div>
+)}
+
+{user && user.role !== "ADMIN" && (
+  <div style={styles.rankBox}>
+    {getNextRankInfo(user.totalDeposit || 0).need > 0 ? (
+      <>
+        📈 Cần nạp thêm{" "}
+        <span style={{ color: "#22d3ee" }}>
+          {getNextRankInfo(user.totalDeposit || 0).need.toLocaleString("vi-VN")}đ
+        </span>{" "}
+        để lên hạng{" "}
+        <span style={{ color: "#f59e0b" }}>
+          {getNextRankInfo(user.totalDeposit || 0).nextRank}
+        </span>
+      </>
+    ) : (
+      <>💎 Bạn đã đạt hạng cao nhất</>
+    )}
+  </div>
+)}
+  
           <div style={styles.notice}>
             <div style={styles.noticeIcon}>🛡️</div>
             <div>
@@ -254,9 +528,9 @@ export default function Home() {
           </div>
 
           <div style={styles.linkBar}>
-            <span>Chuyên link đọc OTP loại ac Mail Domain</span>
-            <span>›</span>
-          </div>
+  🔥 {settings.noticeText} | 🚀 Shop giao tài khoản tự động 24/7 |
+  💎 Bảo hành nhanh | ⚡ Hỗ trợ Zalo tức thì
+</div>
 
           <div style={styles.categoryGrid}>
             {categories.map((cat) => (
@@ -295,7 +569,12 @@ export default function Home() {
                 <div style={styles.productInfo}>
                   <img src="/tiktok-logo.png" style={styles.productLogo} />
                   <div>
-                    <div style={styles.productName}>{p.name}</div>
+                    <div style={styles.productName}>
+  🔥 {p.name}
+  {p.stock > 0 && (
+    <span style={styles.hotBadge}> Còn hàng</span>
+  )}
+</div>
                     <div style={styles.desc}>
                       Bảo hành 6 tiếng tính từ lúc mua. Hàng tự động giao ngay.
                     </div>
@@ -331,6 +610,98 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          <div style={styles.topBox}>
+            <div style={styles.activityTitle}>🏆 TOP NẠP TIỀN</div>
+
+            {topDeposits.map((u: any, index: number) => (
+              <div key={u.id} style={styles.topRow}>
+                <span>
+                  {index === 0 && "🥇 "}
+                  {index === 1 && "🥈 "}
+                  {index === 2 && "🥉 "}
+                  {index > 2 && `#${index + 1} `}
+                  <b>{u.user}</b>
+                </span>
+
+                <b style={{ color: "#22d3ee" }}>
+                  {Number(u.totalDeposit || 0).toLocaleString("vi-VN")}đ
+                </b>
+              </div>
+            ))}
+
+            {topDeposits.length === 0 && (
+              <div style={styles.activityEmpty}>Chưa có dữ liệu top nạp</div>
+            )}
+          </div>
+
+          <div style={styles.topBox}>
+            <div style={styles.activityTitle}>🛒 TOP MUA HÀNG</div>
+
+            {topOrders.map((u: any, index: number) => (
+              <div key={u.id} style={styles.topRow}>
+                <span>
+                  {index === 0 && "🥇 "}
+                  {index === 1 && "🥈 "}
+                  {index === 2 && "🥉 "}
+                  {index > 2 && `#${index + 1} `}
+                  <b>{u.user}</b>
+                </span>
+
+                <b style={{ color: "#22d3ee" }}>
+                  {Number(u.totalBuy || 0).toLocaleString("vi-VN")}đ
+                </b>
+              </div>
+            ))}
+
+            {topOrders.length === 0 && (
+              <div style={styles.activityEmpty}>Chưa có dữ liệu top mua</div>
+            )}
+          </div>
+
+          <div style={styles.activityGrid}>
+            <div style={styles.activityBox}>
+              <div style={styles.activityTitle}>ĐƠN HÀNG GẦN ĐÂY</div>
+
+              <div style={styles.activityList}>
+                {activity.orders.map((o: any) => (
+                  <div key={o.id} style={styles.activityRow}>
+                    🛒 <b style={{ color: "#16a34a" }}>{o.user}</b>{" "}
+                    mua <b style={{ color: "#ef4444" }}>{o.quantity || 1}</b>{" "}
+                    {o.productName || "Sản phẩm"} -{" "}
+                    <b style={{ color: "#2563eb" }}>
+                      {Number(o.amount || 0).toLocaleString("vi-VN")}đ
+                    </b>
+                  </div>
+                ))}
+
+                {activity.orders.length === 0 && (
+                  <div style={styles.activityEmpty}>Chưa có đơn hàng</div>
+                )}
+              </div>
+            </div>
+
+            <div style={styles.activityBox}>
+              <div style={styles.activityTitle}>NẠP TIỀN GẦN ĐÂY</div>
+
+              <div style={styles.activityList}>
+                {activity.deposits.map((d: any) => (
+                  <div key={d.id} style={styles.activityRow}>
+                    💳 <b style={{ color: "#16a34a" }}>{d.user}</b>{" "}
+                    thực hiện nạp{" "}
+                    <b style={{ color: "#2563eb" }}>
+                      {Number(d.amount || 0).toLocaleString("vi-VN")}đ
+                    </b>{" "}
+                    - <b style={{ color: "#ef4444" }}>{d.bank || "BANK"}</b>
+                  </div>
+                ))}
+
+                {activity.deposits.length === 0 && (
+                  <div style={styles.activityEmpty}>Chưa có giao dịch nạp</div>
+                )}
+              </div>
+            </div>
+          </div>
         </section>
 
         {buyProduct && (
@@ -354,14 +725,37 @@ export default function Home() {
                 style={styles.qtyInput}
               />
 
-              <button style={styles.discountBtn}>Nhập mã giảm giá</button>
+              <div style={styles.couponRow}>
+                <input
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="Nhập mã giảm giá"
+                  style={styles.couponInput}
+                />
+
+                <button style={styles.discountBtn} onClick={checkCoupon}>
+                  Áp dụng
+                </button>
+              </div>
+
+              {coupon && (
+                <div style={styles.couponSuccess}>
+                  ✅ Đã áp dụng mã {coupon.code} - Giảm {coupon.type === "PERCENT" ? `${coupon.value}%` : `${Number(coupon.value || 0).toLocaleString("vi-VN")}đ`}
+                </div>
+              )}
 
               <div style={styles.totalText}>
-                Tổng tiền cần thanh toán:{" "}
+                Tổng tiền cần thanh toán: {" "}
                 <b style={{ color: "#ff2b6d" }}>
-                  {(buyProduct.price * buyQty).toLocaleString("vi-VN")}đ
+                  {finalPrice.toLocaleString("vi-VN")}đ
                 </b>
               </div>
+
+              {discountAmount > 0 && (
+                <div style={styles.discountText}>
+                  Đã giảm: {discountAmount.toLocaleString("vi-VN")}đ
+                </div>
+              )}
 
               <button style={styles.payButton} onClick={confirmBuy} disabled={loadingBuy}>
                 💳 {loadingBuy ? "Đang xử lý..." : "Thanh toán"}
@@ -381,6 +775,25 @@ const styles: any = {
     color: "#f8fafc",
     fontFamily: "Arial, sans-serif",
     display: "flex",
+  },
+
+  statsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4,1fr)",
+    gap: 16,
+    marginBottom: 20,
+  },
+
+  statCard: {
+    background:
+      "linear-gradient(135deg,rgba(255,255,255,.05),rgba(255,255,255,.02))",
+    border: "1px solid rgba(255,255,255,.12)",
+    borderRadius: 12,
+    padding: 20,
+    textAlign: "center",
+    fontSize: 22,
+    fontWeight: 900,
+    color: "#fff",
   },
 
   sidebar: {
@@ -716,19 +1129,19 @@ const styles: any = {
   },
 
   linkBar: {
-    height: 50,
-    borderRadius: 10,
-    marginBottom: 22,
-    padding: "0 22px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 16,
-    background:
-      "linear-gradient(90deg,rgba(34,211,238,.12),rgba(236,72,153,.8))",
-    color: "white",
-    fontWeight: 900,
-  },
+  height: 50,
+  borderRadius: 10,
+  marginBottom: 22,
+  padding: "0 22px",
+  display: "flex",
+  alignItems: "center",
+  overflow: "hidden",
+  background:
+    "linear-gradient(90deg,rgba(34,211,238,.12),rgba(236,72,153,.8))",
+  color: "white",
+  fontWeight: 900,
+},
+
 
   categoryGrid: {
     display: "grid",
@@ -809,10 +1222,20 @@ const styles: any = {
   },
 
   productName: {
-    fontWeight: 900,
-    color: "#22d3ee",
-    fontSize: 15,
-  },
+  fontWeight: 900,
+  color: "#22d3ee",
+  fontSize: 15,
+},
+
+hotBadge: {
+  marginLeft: 8,
+  background: "linear-gradient(90deg,#f97316,#ec4899)",
+  color: "white",
+  padding: "3px 7px",
+  borderRadius: 999,
+  fontSize: 11,
+  fontWeight: 900,
+},
 
   desc: {
     color: "#d1d5db",
@@ -930,7 +1353,6 @@ const styles: any = {
   },
 
   discountBtn: {
-    float: "right",
     background: "#ff2b6d",
     color: "white",
     border: 0,
@@ -938,7 +1360,40 @@ const styles: any = {
     padding: "12px 18px",
     fontWeight: 900,
     cursor: "pointer",
-    marginBottom: 20,
+    height: 48,
+    whiteSpace: "nowrap",
+  },
+
+  couponRow: {
+    display: "flex",
+    gap: 10,
+    marginBottom: 14,
+  },
+
+  couponInput: {
+    flex: 1,
+    padding: 14,
+    border: "1px solid rgba(255,255,255,.12)",
+    background: "#0f172a",
+    color: "white",
+    borderRadius: 8,
+    fontSize: 16,
+    outline: "none",
+  },
+
+  couponSuccess: {
+    color: "#22c55e",
+    fontWeight: 800,
+    marginBottom: 14,
+    textAlign: "center",
+  },
+
+  discountText: {
+    color: "#22d3ee",
+    textAlign: "center",
+    fontWeight: 800,
+    marginTop: -14,
+    marginBottom: 18,
   },
 
   totalText: {
@@ -958,5 +1413,107 @@ const styles: any = {
     fontSize: 17,
     fontWeight: 900,
     cursor: "pointer",
+  },
+  adminPanel: {
+  margin: "0 12px 14px",
+  padding: 12,
+  borderRadius: 10,
+  background:
+    "linear-gradient(135deg,rgba(34,211,238,.08),rgba(236,72,153,.08))",
+  border: "1px solid rgba(255,255,255,.12)",
+},
+
+adminTitle: {
+  textAlign: "center",
+  color: "#22d3ee",
+  fontWeight: 900,
+  marginBottom: 10,
+  fontSize: 13,
+},
+
+adminBtn: {
+  display: "block",
+  textDecoration: "none",
+  color: "white",
+  padding: "10px 12px",
+  marginBottom: 6,
+  borderRadius: 8,
+  background: "rgba(255,255,255,.05)",
+  fontWeight: 700,
+},
+
+  topBox: {
+    background:
+      "linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.02))",
+    border: "1px solid rgba(255,255,255,.12)",
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 20,
+    color: "white",
+  },
+
+  topRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "13px 16px",
+    borderBottom: "1px solid rgba(255,255,255,.08)",
+    color: "#e5e7eb",
+    fontSize: 14,
+  },
+
+  activityGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 20,
+    marginTop: 25,
+  },
+
+  activityBox: {
+    background: "#f8fafc",
+    borderRadius: 10,
+    overflow: "hidden",
+    color: "#0f172a",
+    border: "1px solid #cbd5e1",
+  },
+
+  activityTitle: {
+    background: "#1e3a8a",
+    color: "white",
+    fontWeight: 900,
+    padding: "16px 18px",
+    fontSize: 17,
+  },
+
+  activityList: {
+    maxHeight: 360,
+    overflowY: "auto",
+  },
+
+  activityRow: {
+    padding: "13px 16px",
+    borderBottom: "1px solid #e5e7eb",
+    color: "#111827",
+    lineHeight: 1.5,
+    fontSize: 14,
+  },
+
+  activityEmpty: {
+    padding: 20,
+    textAlign: "center",
+    color: "#64748b",
+  },
+
+
+  rankBox: {
+    background:
+      "linear-gradient(135deg,rgba(34,211,238,.08),rgba(236,72,153,.08))",
+    border: "1px solid rgba(255,255,255,.12)",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    textAlign: "center",
+    color: "white",
+    fontWeight: 900,
   },
 };

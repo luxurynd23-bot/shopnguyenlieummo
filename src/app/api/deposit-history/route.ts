@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
@@ -13,7 +11,7 @@ export async function GET(req: Request) {
       ?.split("=")[1];
 
     if (!token) {
-      return NextResponse.json({ deposits: [] });
+      return NextResponse.json({ deposits: [] }, { status: 401 });
     }
 
     const decoded: any = jwt.verify(
@@ -28,10 +26,19 @@ export async function GET(req: Request) {
       orderBy: {
         createdAt: "desc",
       },
+      select: {
+        id: true,
+        amount: true,
+        bank: true,
+        note: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     return NextResponse.json({ deposits });
   } catch {
-    return NextResponse.json({ deposits: [] });
+    return NextResponse.json({ deposits: [] }, { status: 401 });
   }
 }

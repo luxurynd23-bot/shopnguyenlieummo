@@ -11,6 +11,8 @@ const payOS = new PayOS({
   checksumKey: process.env.PAYOS_CHECKSUM_KEY!,
 });
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
 export async function POST(req: Request) {
   try {
     const cookie = req.headers.get("cookie") || "";
@@ -40,7 +42,6 @@ export async function POST(req: Request) {
 
     const orderCode = Number(String(Date.now()).slice(-10));
 
-    // Tạo đơn nạp trong DB
     await prisma.deposit.create({
       data: {
         userId: decoded.id,
@@ -50,20 +51,23 @@ export async function POST(req: Request) {
       },
     });
 
-    // Tạo payment link
     const paymentLink = await payOS.paymentRequests.create({
       orderCode,
       amount: money,
       description: "Nap tien MMO",
-      returnUrl: `${process.env.NEXT_PUBLIC_URL}/wallet`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_URL}/deposit`,
+      cancelUrl: `${APP_URL}/wallet`,
+      returnUrl: `${APP_URL}/wallet`,
     });
 
     return NextResponse.json({ checkoutUrl: paymentLink.checkoutUrl });
   } catch (error: any) {
     console.error("PAYOS ERROR:", error);
+
     return NextResponse.json(
-      { message: "Loi PayOS", error: error?.message || String(error) },
+      {
+        message: "Loi PayOS",
+        error: error?.message || String(error),
+      },
       { status: 500 }
     );
   }

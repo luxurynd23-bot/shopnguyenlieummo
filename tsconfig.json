@@ -16,8 +16,14 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
-    "plugins": [
+    "jsx": "preserve",
+
+"baseUrl": ".",
+"paths": {
+  "@/*": ["./src/*"]
+},
+
+"plugins": [
       {
         "name": "next"
       }

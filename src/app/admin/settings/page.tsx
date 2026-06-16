@@ -16,10 +16,13 @@ export default function AdminSettings() {
 
   async function loadSettings() {
     setLoading(true);
+
     try {
       const res = await fetch("/api/admin-settings");
+
       if (res.ok) {
         const data = await res.json();
+
         setForm({
           shopName: data.settings?.shopName || "",
           shopDomain: data.settings?.shopDomain || "",
@@ -32,6 +35,7 @@ export default function AdminSettings() {
     } catch (err) {
       console.error(err);
     }
+
     setLoading(false);
   }
 
@@ -43,9 +47,12 @@ export default function AdminSettings() {
     try {
       const res = await fetch("/api/admin-settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(form),
       });
+
       if (res.ok) {
         alert("Đã lưu cài đặt thành công!");
       } else {
@@ -59,91 +66,224 @@ export default function AdminSettings() {
   }
 
   if (loading) {
-    return <div style={{ padding: 30 }}>Đang tải cài đặt...</div>;
+    return (
+      <main style={styles.page}>
+        <AdminNav />
+        <div>Đang tải cài đặt...</div>
+      </main>
+    );
   }
 
   return (
-    <main style={{ padding: 30, fontFamily: "Arial", minHeight: "100vh", background: "#f3f6fb" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 900, marginBottom: 24 }}>Cài đặt Shop</h1>
+    <main style={styles.page}>
+      <AdminNav />
 
-      <section style={boxStyle}>
-        <label>Tên shop</label>
+      <div style={styles.headerBox}>
+        <h1 style={styles.title}>⚙️ Cài đặt Shop</h1>
+
+        <button onClick={loadSettings} style={styles.reloadBtn}>
+          ↻ Tải lại
+        </button>
+      </div>
+
+      <section style={styles.box}>
+        <label style={styles.label}>Tên shop</label>
         <input
-          style={inputStyle}
+          style={styles.input}
           value={form.shopName}
-          onChange={(e) => setForm({ ...form, shopName: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, shopName: e.target.value })
+          }
         />
 
-        <label>Domain shop</label>
+        <label style={styles.label}>Domain shop</label>
         <input
-          style={inputStyle}
+          style={styles.input}
           value={form.shopDomain}
-          onChange={(e) => setForm({ ...form, shopDomain: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, shopDomain: e.target.value })
+          }
         />
 
-        <label>Thông báo bảo hành</label>
+        <label style={styles.label}>Thông báo bảo hành</label>
         <textarea
-          style={{ ...inputStyle, height: 80 }}
+          style={{ ...styles.input, height: 90 }}
           value={form.warrantyText}
-          onChange={(e) => setForm({ ...form, warrantyText: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, warrantyText: e.target.value })
+          }
         />
 
-        <label>Thông báo chung (Notice)</label>
+        <label style={styles.label}>Thông báo chung</label>
         <textarea
-          style={{ ...inputStyle, height: 80 }}
+          style={{ ...styles.input, height: 90 }}
           value={form.noticeText}
-          onChange={(e) => setForm({ ...form, noticeText: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, noticeText: e.target.value })
+          }
         />
 
-        <label>Số Zalo hỗ trợ</label>
+        <label style={styles.label}>Số Zalo hỗ trợ</label>
         <input
-          style={inputStyle}
+          style={styles.input}
           value={form.supportZalo}
-          onChange={(e) => setForm({ ...form, supportZalo: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, supportZalo: e.target.value })
+          }
         />
 
-        <label>Link nhóm Zalo</label>
+        <label style={styles.label}>Link nhóm Zalo</label>
         <input
-          style={inputStyle}
+          style={styles.input}
           value={form.groupZalo}
-          onChange={(e) => setForm({ ...form, groupZalo: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, groupZalo: e.target.value })
+          }
         />
 
-        <button onClick={saveSettings} style={buttonStyle}>
-          Lưu cài đặt
+        <button onClick={saveSettings} style={styles.saveBtn}>
+          💾 Lưu cài đặt
         </button>
       </section>
     </main>
   );
 }
 
-const boxStyle: any = {
-  background: "white",
-  padding: 20,
-  borderRadius: 10,
-  marginBottom: 25,
-  boxShadow: "0 4px 14px rgba(0,0,0,.08)",
-  display: "flex",
-  flexDirection: "column",
-  gap: 10,
-};
+function AdminNav() {
+  return (
+    <div style={styles.nav}>
+      <a href="/" style={styles.homeBtn}>
+        ← Trang chủ
+      </a>
 
-const inputStyle: any = {
-  display: "block",
-  width: "100%",
-  padding: 12,
-  border: "1px solid #cbd5e1",
-  borderRadius: 8,
-  marginBottom: 10,
-};
+      <a href="/admin/dashboard" style={styles.navBtn}>
+        📊 Dashboard
+      </a>
 
-const buttonStyle: any = {
-  marginTop: 12,
-  background: "#2563eb",
-  color: "white",
-  border: 0,
-  padding: "12px 18px",
-  borderRadius: 8,
-  fontWeight: 800,
-  cursor: "pointer",
+      <a href="/admin" style={styles.navBtn}>
+        📦 Sản phẩm
+      </a>
+
+      <a href="/admin/stock" style={styles.navBtn}>
+        📥 Kho
+      </a>
+
+      <a href="/admin/orders" style={styles.navBtn}>
+        📋 Đơn hàng
+      </a>
+
+      <a href="/admin/users" style={styles.navBtn}>
+        👤 Users
+      </a>
+
+      <a href="/admin/settings" style={styles.activeBtn}>
+        ⚙️ Cài đặt
+      </a>
+    </div>
+  );
+}
+
+const styles: any = {
+  page: {
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "white",
+    padding: 30,
+    fontFamily: "Arial, sans-serif",
+  },
+
+  nav: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+    marginBottom: 22,
+    padding: 14,
+    borderRadius: 12,
+    background: "rgba(15,23,42,.85)",
+    border: "1px solid rgba(255,255,255,.12)",
+  },
+
+  homeBtn: {
+    background: "linear-gradient(90deg,#06b6d4,#ec4899)",
+    color: "white",
+    textDecoration: "none",
+    padding: "10px 15px",
+    borderRadius: 8,
+    fontWeight: 900,
+  },
+
+  navBtn: {
+    background: "#1e293b",
+    color: "white",
+    textDecoration: "none",
+    padding: "10px 14px",
+    borderRadius: 8,
+    fontWeight: 800,
+  },
+
+  activeBtn: {
+    background: "#2563eb",
+    color: "white",
+    textDecoration: "none",
+    padding: "10px 14px",
+    borderRadius: 8,
+    fontWeight: 900,
+  },
+
+  headerBox: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  title: {
+    fontSize: 30,
+    margin: 0,
+  },
+
+  reloadBtn: {
+    background: "#334155",
+    color: "white",
+    border: 0,
+    padding: "10px 14px",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontWeight: 800,
+  },
+
+  box: {
+    background: "#111827",
+    padding: 20,
+    borderRadius: 12,
+    border: "1px solid rgba(255,255,255,.12)",
+  },
+
+  label: {
+    display: "block",
+    marginTop: 12,
+    marginBottom: 6,
+    fontWeight: 700,
+  },
+
+  input: {
+    width: "100%",
+    padding: 12,
+    borderRadius: 8,
+    border: "1px solid rgba(255,255,255,.15)",
+    background: "#1e293b",
+    color: "white",
+    outline: "none",
+  },
+
+  saveBtn: {
+    marginTop: 20,
+    background: "#2563eb",
+    color: "white",
+    border: 0,
+    padding: "12px 18px",
+    borderRadius: 8,
+    fontWeight: 800,
+    cursor: "pointer",
+  },
 };

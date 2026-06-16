@@ -2,112 +2,218 @@
 
 import { useEffect, useState } from "react";
 
-interface AccountItem {
-  id: string;
-  content: string;
-}
-
-interface OrderDetail {
-  id: string;
-  orderNumber: string;
-  items: AccountItem[];
-}
-
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
-  const [order, setOrder] = useState<OrderDetail | null>(null);
+export default function AdminOrdersPage() {
+  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function loadOrder() {
+  async function loadOrders() {
     setLoading(true);
-    const res = await fetch(`/api/orders/${params.id}`);
-    if (res.ok) {
+
+    try {
+      const res = await fetch("/api/admin-orders");
       const data = await res.json();
-      setOrder(data.order);
-    } else {
-      setOrder(null);
+
+      if (res.ok) {
+        setOrders(data.orders || []);
+      } else {
+        setOrders([]);
+      }
+    } catch {
+      setOrders([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => {
-    loadOrder();
-  }, [params.id]);
-
-  if (loading) return <div style={{ padding: 30 }}>Đang tải đơn hàng...</div>;
-  if (!order) return <div style={{ padding: 30 }}>Không tìm thấy đơn hàng.</div>;
+    loadOrders();
+  }, []);
 
   return (
-    <main style={{ padding: 30, fontFamily: "Arial", minHeight: "100vh", background: "#f3f6fb" }}>
-      <h1>Chi tiết đơn hàng #{order.orderNumber}</h1>
+    <main style={styles.page}>
+      <AdminNav />
 
-      <button
-        onClick={() => {
-          const allContent = order.items.map(i => i.content).join("\n");
-          navigator.clipboard.writeText(allContent);
-          alert("Đã sao chép tất cả tài khoản");
-        }}
-        style={{
-          background: "#10b981",
-          color: "white",
-          border: 0,
-          padding: "10px 18px",
-          borderRadius: 6,
-          fontWeight: 800,
-          marginBottom: 16,
-        }}
-      >
-        Sao Chép Tất Cả
-      </button>
+      <div style={styles.headerBox}>
+        <h1 style={styles.title}>📋 Quản lý đơn hàng</h1>
 
-      <div style={{ background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 6px 18px rgba(0,0,0,.08)" }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 160px",
-            background: "#1e40af",
-            color: "white",
-            fontWeight: 900,
-            padding: 12,
-          }}
-        >
-          <div>Tài khoản</div>
-          <div>Hành động</div>
-        </div>
-
-        {order.items.map((i, index) => (
-          <div
-            key={i.id}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 160px",
-              borderTop: "1px solid #ddd",
-              alignItems: "center",
-              padding: "8px 12px",
-            }}
-          >
-            <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{i.content}</pre>
-            <div>
-              <button
-                style={{
-                  background: "#ef4444",
-                  color: "white",
-                  border: 0,
-                  padding: "6px 12px",
-                  borderRadius: 6,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-                onClick={() => {
-                  navigator.clipboard.writeText(i.content);
-                  alert("Đã sao chép tài khoản");
-                }}
-              >
-                Sao Chép
-              </button>
-            </div>
-          </div>
-        ))}
+        <button onClick={loadOrders} style={styles.reloadBtn}>
+          ↻ Tải lại
+        </button>
       </div>
+
+      {loading ? (
+        <div>Đang tải đơn hàng...</div>
+      ) : (
+        <div style={styles.tableBox}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>Mã đơn</th>
+                <th style={styles.th}>Sản phẩm</th>
+                <th style={styles.th}>Số tiền</th>
+                <th style={styles.th}>Ngày mua</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {orders.map((o) => (
+                <tr key={o.id}>
+                  <td style={styles.td}>{o.id}</td>
+                  <td style={styles.td}>{o.productName || o.product}</td>
+                  <td style={styles.td}>
+                    {Number(o.amount || 0).toLocaleString("vi-VN")}đ
+                  </td>
+                  <td style={styles.td}>
+                    {new Date(o.createdAt).toLocaleString("vi-VN")}
+                  </td>
+                </tr>
+              ))}
+
+              {orders.length === 0 && (
+                <tr>
+                  <td colSpan={4} style={styles.empty}>
+                    Chưa có đơn hàng
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </main>
   );
 }
+
+function AdminNav() {
+  return (
+    <div style={styles.nav}>
+      <a href="/" style={styles.homeBtn}>
+        ← Trang chủ
+      </a>
+
+      <a href="/admin/dashboard" style={styles.navBtn}>
+        📊 Dashboard
+      </a>
+
+      <a href="/admin" style={styles.navBtn}>
+        📦 Sản phẩm
+      </a>
+
+      <a href="/admin/stock" style={styles.navBtn}>
+        📥 Kho
+      </a>
+
+      <a href="/admin/orders" style={styles.activeBtn}>
+        📋 Đơn hàng
+      </a>
+
+      <a href="/admin/users" style={styles.navBtn}>
+        👤 Users
+      </a>
+
+      <a href="/admin/settings" style={styles.navBtn}>
+        ⚙️ Cài đặt
+      </a>
+    </div>
+  );
+}
+
+const styles: any = {
+  page: {
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "white",
+    padding: 30,
+    fontFamily: "Arial, sans-serif",
+  },
+
+  nav: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+    marginBottom: 22,
+    padding: 14,
+    borderRadius: 12,
+    background: "rgba(15,23,42,.85)",
+    border: "1px solid rgba(255,255,255,.12)",
+  },
+
+  homeBtn: {
+    background: "linear-gradient(90deg,#06b6d4,#ec4899)",
+    color: "white",
+    textDecoration: "none",
+    padding: "10px 15px",
+    borderRadius: 8,
+    fontWeight: 900,
+  },
+
+  navBtn: {
+    background: "#1e293b",
+    color: "white",
+    textDecoration: "none",
+    padding: "10px 14px",
+    borderRadius: 8,
+    fontWeight: 800,
+  },
+
+  activeBtn: {
+    background: "#2563eb",
+    color: "white",
+    textDecoration: "none",
+    padding: "10px 14px",
+    borderRadius: 8,
+    fontWeight: 900,
+  },
+
+  headerBox: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  title: {
+    fontSize: 30,
+    margin: 0,
+  },
+
+  reloadBtn: {
+    background: "#334155",
+    color: "white",
+    border: 0,
+    padding: "10px 14px",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontWeight: 800,
+  },
+
+  tableBox: {
+    background: "#111827",
+    borderRadius: 12,
+    overflow: "auto",
+    border: "1px solid rgba(255,255,255,.12)",
+  },
+
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+  },
+
+  th: {
+    textAlign: "left",
+    padding: 14,
+    borderBottom: "1px solid rgba(255,255,255,.12)",
+    color: "#93c5fd",
+  },
+
+  td: {
+    padding: 14,
+    borderBottom: "1px solid rgba(255,255,255,.08)",
+  },
+
+  empty: {
+    textAlign: "center",
+    padding: 30,
+    color: "#cbd5e1",
+  },
+};

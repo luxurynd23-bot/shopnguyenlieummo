@@ -42,7 +42,7 @@ export default function OrdersPage() {
           <img src="/tiktok-logo.png" style={styles.logoImg} />
           <div>
             <div style={styles.logoText}>ShopMMO</div>
-            <div style={styles.logoDomain}>shopmmo.info.vn</div>
+            <div style={styles.logoDomain}>shopnguyenlieummo</div>
           </div>
         </div>
 

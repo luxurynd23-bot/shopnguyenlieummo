@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
@@ -14,7 +12,7 @@ export async function POST(req: Request) {
       ?.split("=")[1];
 
     if (!token) {
-      return NextResponse.json({ message: "Chua dang nhap" }, { status: 401 });
+      return NextResponse.json({ message: "Chưa đăng nhập" }, { status: 401 });
     }
 
     const decoded: any = jwt.verify(
@@ -24,9 +22,20 @@ export async function POST(req: Request) {
 
     const { oldPassword, newPassword } = await req.json();
 
-    if (!oldPassword || !newPassword || newPassword.length < 6) {
+    if (!oldPassword || !newPassword) {
+      return NextResponse.json({ message: "Thiếu mật khẩu" }, { status: 400 });
+    }
+
+    if (String(newPassword).length < 6) {
       return NextResponse.json(
-        { message: "Mat khau moi toi thieu 6 ky tu" },
+        { message: "Mật khẩu mới tối thiểu 6 ký tự" },
+        { status: 400 }
+      );
+    }
+
+    if (oldPassword === newPassword) {
+      return NextResponse.json(
+        { message: "Mật khẩu mới phải khác mật khẩu cũ" },
         { status: 400 }
       );
     }
@@ -36,26 +45,44 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ message: "Khong tim thay user" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Không tìm thấy user" },
+        { status: 404 }
+      );
     }
 
-    const ok = await bcrypt.compare(oldPassword, user.passwordHash);
+    if (user.isBanned) {
+      return NextResponse.json(
+        { message: "Tài khoản đã bị khóa" },
+        { status: 403 }
+      );
+    }
+
+    const ok = await bcrypt.compare(String(oldPassword), user.passwordHash);
 
     if (!ok) {
-      return NextResponse.json({ message: "Mat khau cu khong dung" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Mật khẩu cũ không đúng" },
+        { status: 400 }
+      );
     }
 
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const passwordHash = await bcrypt.hash(String(newPassword), 10);
 
     await prisma.user.update({
       where: { id: user.id },
       data: { passwordHash },
     });
 
-    return NextResponse.json({ message: "Doi mat khau thanh cong" });
+    return NextResponse.json({
+      message: "Đổi mật khẩu thành công",
+    });
   } catch (error: any) {
     return NextResponse.json(
-      { message: "Loi doi mat khau", error: error?.message || String(error) },
+      {
+        message: "Lỗi đổi mật khẩu",
+        error: error?.message || String(error),
+      },
       { status: 500 }
     );
   }

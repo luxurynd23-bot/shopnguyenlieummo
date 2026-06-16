@@ -3,81 +3,204 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
+enum DepositStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum OrderStatus {
+  PAID
+  CANCELLED
+}
+
+enum VipLevel {
+  BRONZE
+  SILVER
+  GOLD
+  DIAMOND
+}
+
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String  @id @default(cuid())
+  email        String  @unique
   passwordHash String
   name         String?
-  balance      Int      @default(0)
 
-  totalDeposit Int @default(0)
-  role         String   @default("USER")
+  referralCode String? @unique
+  referredBy   String?
+
+  tickets Ticket[]
+
+  referralCommissions  ReferralCommission[] @relation("Referrer")
+  generatedCommissions ReferralCommission[] @relation("ReferredUser")
+
+  balance         Int             @default(0)
+  totalDeposit    Int             @default(0)
+  walletHistories WalletHistory[]
+  referralBalance Int             @default(0)
+
+  vipLevel VipLevel @default(BRONZE)
+
+  isBanned Boolean @default(false)
+
+  role Role @default(USER)
+
   deposits     Deposit[]
-
-  createdAt    DateTime @default(now())
+  orders       Order[]
+  couponUsages CouponUsage[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now()) @updatedAt
 }
 
 model Deposit {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  amount    Int
-  bank      String   @default("MBBank")
-  note      String
+  amount Int
+  bank   String @default("MBBank")
+  note   String @unique
 
-  status    String   @default("PENDING")
+  status DepositStatus @default(PENDING)
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Product {
-  id        String   @id @default(cuid())
-  name      String
-  price     Int
-  stock     Int      @default(0)
-  content   String?
+  id      String  @id @default(cuid())
+  name    String
+  price   Int
+  stock   Int     @default(0)
+  content String?
+
+  orders       Order[]
+  accountItems AccountItem[]
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Order {
-  id        String   @id @default(cuid())
-  userId    String
-  productId String
+  id String @id @default(cuid())
 
-  product   String
-  amount    Int
-  content   String?
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  items     AccountItem[]
+  productId   String
+  productRef  Product @relation(fields: [productId], references: [id])
+  productName String
+
+  amount  Int
+  content String?
+
+  status OrderStatus @default(PAID)
+
+  items AccountItem[]
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model AccountItem {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
+
   productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  orderId   String?
-  order     Order?   @relation(fields: [orderId], references: [id])
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id])
 
-  content   String
+  content String
 
-  sold      Boolean  @default(false)
-  soldAt    DateTime?
+  sold   Boolean   @default(false)
+  soldAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Coupon {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  type      String
+  value     Int
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Ticket {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  title      String
+  message    String
+  status     String   @default("OPEN")
+  adminReply String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ReferralCommission {
+  id String @id @default(cuid())
+
+  referrerId String
+  referrer   User   @relation("Referrer", fields: [referrerId], references: [id])
+
+  referredUserId String
+  referredUser   User   @relation("ReferredUser", fields: [referredUserId], references: [id])
+
+  amount     Int
+  commission Int
 
   createdAt DateTime @default(now())
 }
-model Setting {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
+
+model CouponUsage {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  couponCode String
+
+  discount Int
+
+  orderId String
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+}
+
+model WalletHistory {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type   String
+  amount Int
+  note   String?
+
+  createdAt DateTime @default(now())
 }
