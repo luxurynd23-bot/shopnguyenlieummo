@@ -51,7 +51,7 @@ model User {
   referralBalance Int             @default(0)
 
   vipLevel VipLevel @default(BRONZE)
-
+tiktokChecks TiktokCheckHistory[]
   isBanned Boolean @default(false)
 
   role Role @default(USER)
@@ -203,4 +203,30 @@ model WalletHistory {
   note   String?
 
   createdAt DateTime @default(now())
+}
+model TiktokCheckHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  sessionHash String
+  cost        Int      @default(500)
+
+  status      String?
+  orderId     String?
+  trackingNo  String?
+  shopName    String?
+  product     String?
+  total       String?
+  carrierName String?
+  shipperName String?
+  shipperPhone String?
+  phone       String?
+  address     String?
+  raw         Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, sessionHash])
 }
