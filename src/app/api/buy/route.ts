@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 function getVipDiscount(vipLevel: string) {
   if (vipLevel === "DIAMOND") return 10;
@@ -48,20 +46,6 @@ export async function POST(req: Request) {
       });
 
       if (!product) throw new Error("Sản phẩm không tồn tại");
-      if (product.stock < qty) throw new Error("Hết hàng trong kho");
-
-      const accounts = await tx.accountItem.findMany({
-        where: {
-          productId: product.id,
-          sold: false,
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-        take: qty,
-      });
-
-      if (accounts.length < qty) throw new Error("Hết hàng trong kho");
 
       const user = await tx.user.findUnique({
         where: { id: decoded.id },
@@ -69,6 +53,22 @@ export async function POST(req: Request) {
 
       if (!user) throw new Error("Tài khoản không tồn tại");
       if (user.isBanned) throw new Error("Tài khoản đã bị khóa");
+
+      const accounts = await tx.accountItem.findMany({
+        where: {
+          productId: product.id,
+          sold: false,
+          orderId: null,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+        take: qty,
+      });
+
+      if (accounts.length < qty) {
+        throw new Error("Hết hàng trong kho");
+      }
 
       const subtotal = product.price * qty;
 
@@ -95,34 +95,63 @@ export async function POST(req: Request) {
           couponDiscount = coupon.value;
         }
 
-        if (couponDiscount < 0) couponDiscount = 0;
-        if (couponDiscount > subtotal) couponDiscount = subtotal;
+        couponDiscount = Math.max(0, Math.min(couponDiscount, subtotal));
       }
 
       const vipPercent = getVipDiscount((user as any).vipLevel || "BRONZE");
-      let vipDiscount = Math.floor((subtotal * vipPercent) / 100);
 
-      if (vipDiscount < 0) vipDiscount = 0;
-      if (vipDiscount > subtotal) vipDiscount = subtotal;
+      const vipDiscount = Math.max(
+        0,
+        Math.min(Math.floor((subtotal * vipPercent) / 100), subtotal)
+      );
 
       const totalDiscount = Math.min(subtotal, couponDiscount + vipDiscount);
       const finalTotal = Math.max(subtotal - totalDiscount, 0);
 
+      if (user.balance < finalTotal) {
+        throw new Error("Số dư không đủ");
+      }
+
       if (couponName) {
-        couponText += `\n\nMã giảm giá: ${couponName}`;
+        couponText += `Mã giảm giá: ${couponName}`;
         couponText += `\nGiảm coupon: ${couponDiscount.toLocaleString("vi-VN")}đ`;
       }
 
       if (vipPercent > 0) {
-        couponText += `\nVIP: ${(user as any).vipLevel}`;
+        couponText += `${couponText ? "\n" : ""}VIP: ${(user as any).vipLevel}`;
         couponText += `\nGiảm VIP ${vipPercent}%: ${vipDiscount.toLocaleString("vi-VN")}đ`;
       }
 
-      couponText += `\nTổng trước giảm: ${subtotal.toLocaleString("vi-VN")}đ`;
+      couponText += `${couponText ? "\n" : ""}Tổng trước giảm: ${subtotal.toLocaleString("vi-VN")}đ`;
       couponText += `\nThanh toán: ${finalTotal.toLocaleString("vi-VN")}đ`;
 
-      if (user.balance < finalTotal) {
-        throw new Error("Số dư không đủ");
+      const createdOrder = await tx.order.create({
+        data: {
+          userId: user.id,
+          productId: product.id,
+          productName: product.name,
+          amount: finalTotal,
+          content: couponText,
+        },
+      });
+
+      const updateItems = await tx.accountItem.updateMany({
+        where: {
+          id: {
+            in: accounts.map((a) => a.id),
+          },
+          sold: false,
+          orderId: null,
+        },
+        data: {
+          sold: true,
+          soldAt: new Date(),
+          orderId: createdOrder.id,
+        },
+      });
+
+      if (updateItems.count !== qty) {
+        throw new Error("Có người vừa mua trước, vui lòng thử lại");
       }
 
       await tx.user.update({
@@ -135,23 +164,11 @@ export async function POST(req: Request) {
       });
 
       await tx.product.update({
-        where: {
-          id: product.id,
-        },
+        where: { id: product.id },
         data: {
           stock: {
             decrement: qty,
           },
-        },
-      });
-
-      const createdOrder = await tx.order.create({
-        data: {
-          userId: user.id,
-          productId: product.id,
-          productName: product.name,
-          amount: finalTotal,
-          content: accounts.map((a) => a.content).join("\n") + couponText,
         },
       });
 
@@ -174,20 +191,6 @@ export async function POST(req: Request) {
           },
         });
       }
-
-      await tx.accountItem.updateMany({
-        where: {
-          id: {
-            in: accounts.map((a) => a.id),
-          },
-          sold: false,
-        },
-        data: {
-          sold: true,
-          soldAt: new Date(),
-          orderId: createdOrder.id,
-        },
-      });
 
       return {
         order: createdOrder,

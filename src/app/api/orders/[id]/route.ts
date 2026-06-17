@@ -73,14 +73,26 @@ export async function GET(
       );
     }
 
-    const accounts = String(order.content || "")
-      .split(/\r?\n/)
-      .map((x) => x.trim())
-      .filter(Boolean);
+    const items = await prisma.accountItem.findMany({
+      where: {
+        orderId: order.id,
+      },
+      select: {
+        id: true,
+        content: true,
+        soldAt: true,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    const accounts = items.map((item) => item.content);
 
     return NextResponse.json({
       order,
       accounts,
+      items,
     });
   } catch (error: any) {
     return NextResponse.json(
