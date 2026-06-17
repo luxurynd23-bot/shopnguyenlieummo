@@ -8,16 +8,10 @@ export default function AdminDashboard() {
 
   async function loadDashboard() {
     setLoading(true);
-
     try {
-      const res = await fetch("/api/admin-dashboard");
-
-      if (res.ok) {
-        const data = await res.json();
-        setStats(data);
-      } else {
-        setStats(null);
-      }
+      const res = await fetch("/api/admin/dashboard");
+      const data = await res.json();
+      setStats(res.ok ? data : null);
     } catch {
       setStats(null);
     } finally {
@@ -81,6 +75,8 @@ export default function AdminDashboard() {
         <StatCard icon="🎫" title="Ticket mở" value={stats.openTickets || 0} />
         <StatCard icon="🎁" title="Hoa hồng" value={money(stats.totalCommission)} />
         <StatCard icon="🎟" title="Coupon đã giảm" value={money(stats.totalCouponDiscount)} />
+        <StatCard icon="🚚" title="Doanh thu Check MVD" value={money(stats.totalCheckRevenue)} />
+        <StatCard icon="📈" title="Lợi nhuận Check MVD" value={money(stats.totalCheckProfit)} />
       </div>
 
       <div style={styles.twoCol}>
@@ -99,7 +95,6 @@ export default function AdminDashboard() {
                 </b>
                 <div style={styles.smallText}>{p.count} đơn hàng</div>
               </div>
-
               <b style={{ color: "#22c55e" }}>{money(p.revenue)}</b>
             </div>
           ))}
@@ -120,7 +115,6 @@ export default function AdminDashboard() {
                 </b>
                 <div style={styles.smallText}>VIP: {u.vipLevel || "BRONZE"}</div>
               </div>
-
               <b style={{ color: "#22d3ee" }}>{money(u.totalDeposit)}</b>
             </div>
           ))}
@@ -140,6 +134,8 @@ export default function AdminDashboard() {
             <QuickItem label="Ticket mở" value={stats.openTickets || 0} />
             <QuickItem label="Hoa hồng" value={money(stats.totalCommission)} />
             <QuickItem label="Coupon giảm" value={money(stats.totalCouponDiscount)} />
+            <QuickItem label="Check MVD" value={money(stats.totalCheckRevenue)} />
+            <QuickItem label="Lãi MVD" value={money(stats.totalCheckProfit)} />
           </div>
         </div>
 
@@ -243,7 +239,6 @@ const styles: any = {
     padding: 30,
     fontFamily: "Arial, sans-serif",
   },
-
   nav: {
     display: "flex",
     gap: 10,
@@ -256,7 +251,6 @@ const styles: any = {
     border: "1px solid rgba(255,255,255,.12)",
     boxShadow: "0 20px 60px rgba(0,0,0,.25)",
   },
-
   homeBtn: {
     background: "linear-gradient(90deg,#06b6d4,#ec4899)",
     color: "white",
@@ -265,7 +259,6 @@ const styles: any = {
     borderRadius: 8,
     fontWeight: 900,
   },
-
   navBtn: {
     background: "#1e293b",
     color: "white",
@@ -275,7 +268,6 @@ const styles: any = {
     fontWeight: 800,
     border: "1px solid rgba(255,255,255,.1)",
   },
-
   activeBtn: {
     background: "#2563eb",
     color: "white",
@@ -285,7 +277,6 @@ const styles: any = {
     fontWeight: 900,
     border: "1px solid rgba(255,255,255,.2)",
   },
-
   headerBox: {
     display: "flex",
     justifyContent: "space-between",
@@ -293,19 +284,16 @@ const styles: any = {
     marginBottom: 22,
     gap: 14,
   },
-
   title: {
     fontSize: 34,
     margin: 0,
     fontWeight: 900,
   },
-
   subTitle: {
     color: "#cbd5e1",
     marginTop: 6,
     fontWeight: 700,
   },
-
   reloadBtn: {
     background: "linear-gradient(90deg,#06b6d4,#ec4899)",
     color: "white",
@@ -315,14 +303,12 @@ const styles: any = {
     cursor: "pointer",
     fontWeight: 900,
   },
-
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))",
     gap: 18,
     marginBottom: 24,
   },
-
   card: {
     background:
       "linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.025))",
@@ -331,32 +317,27 @@ const styles: any = {
     border: "1px solid rgba(255,255,255,.12)",
     boxShadow: "0 18px 50px rgba(0,0,0,.22)",
   },
-
   cardIcon: {
     fontSize: 28,
     marginBottom: 10,
   },
-
   cardTitle: {
     fontSize: 14,
     fontWeight: 800,
     color: "#93c5fd",
   },
-
   cardValue: {
     fontSize: 26,
     fontWeight: 900,
     color: "#22d3ee",
     marginTop: 8,
   },
-
   twoCol: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: 20,
     marginBottom: 24,
   },
-
   box: {
     background:
       "linear-gradient(135deg,rgba(17,24,39,.96),rgba(15,23,42,.96))",
@@ -366,13 +347,11 @@ const styles: any = {
     marginBottom: 24,
     boxShadow: "0 18px 50px rgba(0,0,0,.22)",
   },
-
   boxTitle: {
     marginTop: 0,
     marginBottom: 18,
     fontWeight: 900,
   },
-
   listRow: {
     display: "flex",
     justifyContent: "space-between",
@@ -380,18 +359,15 @@ const styles: any = {
     padding: "13px 0",
     borderBottom: "1px solid rgba(255,255,255,.08)",
   },
-
   smallText: {
     color: "#94a3b8",
     marginTop: 4,
     fontSize: 14,
   },
-
   quickGrid: {
     display: "grid",
     gap: 12,
   },
-
   quickItem: {
     display: "flex",
     justifyContent: "space-between",
@@ -400,42 +376,35 @@ const styles: any = {
     borderRadius: 10,
     border: "1px solid rgba(255,255,255,.08)",
   },
-
   statusRow: {
     display: "flex",
     justifyContent: "space-between",
     padding: "13px 0",
     borderBottom: "1px solid rgba(255,255,255,.08)",
   },
-
   empty: {
     color: "#cbd5e1",
     padding: "10px 0",
   },
-
   dayRow: {
     marginTop: 16,
   },
-
   dayTop: {
     display: "flex",
     justifyContent: "space-between",
     marginBottom: 8,
   },
-
   progressBg: {
     height: 14,
     background: "#334155",
     borderRadius: 999,
     overflow: "hidden",
   },
-
   progressFill: {
     height: "100%",
     background: "linear-gradient(90deg,#06b6d4,#ec4899)",
     borderRadius: 999,
   },
-
   loadingBox: {
     padding: 20,
     borderRadius: 12,
@@ -443,7 +412,6 @@ const styles: any = {
     border: "1px solid rgba(255,255,255,.12)",
     fontWeight: 900,
   },
-
   errorBox: {
     padding: 20,
     borderRadius: 12,

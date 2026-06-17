@@ -209,22 +209,24 @@ model TiktokCheckHistory {
   userId      String
   sessionHash String
   cost        Int      @default(500)
+  apiCost     Int      @default(300)
+  profit      Int      @default(200)
 
-  status      String?
-  orderId     String?
-  trackingNo  String?
-  shopName    String?
-  product     String?
-  total       String?
-  carrierName String?
-  shipperName String?
+  status       String?
+  orderId      String?
+  trackingNo   String?
+  shopName     String?
+  product      String?
+  total        String?
+  carrierName  String?
+  shipperName  String?
   shipperPhone String?
-  phone       String?
-  address     String?
-  raw         Json?
+  phone        String?
+  address      String?
+  raw          Json?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id])
 

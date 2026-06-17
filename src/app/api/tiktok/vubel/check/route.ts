@@ -4,9 +4,8 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
 const prisma = new PrismaClient();
-
 const CHECK_COST = 500;
-
+const VUBEL_COST = 300;
 function getSessionHash(session: string) {
   return crypto.createHash("sha256").update(session.trim()).digest("hex");
 }
@@ -47,7 +46,27 @@ export async function POST(req: Request) {
         { status: 401 }
       );
     }
+const lastCheck = await prisma.tiktokCheckHistory.findFirst({
+  where: {
+    userId,
+  },
+  orderBy: {
+    createdAt: "desc",
+  },
+});
 
+if (
+  lastCheck &&
+  Date.now() - new Date(lastCheck.createdAt).getTime() < 2000
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      message: "Vui lòng chờ 2 giây rồi check tiếp",
+    },
+    { status: 429 }
+  );
+}
     const cleanSession = session.startsWith("cookies=")
       ? session
       : `cookies=${session}`;
@@ -75,9 +94,13 @@ export async function POST(req: Request) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, balance: true },
-    });
+  where: { id: userId },
+  select: {
+    id: true,
+    balance: true,
+    role: true,
+  },
+});
 
     if (!user) {
       return NextResponse.json(
@@ -86,11 +109,16 @@ export async function POST(req: Request) {
       );
     }
 
-    if (user.balance < CHECK_COST) {
+    if (
+  user.role !== "ADMIN" &&
+  user.balance < CHECK_COST
+) {
       return NextResponse.json(
         {
           success: false,
-          message: `Số dư không đủ. Cần ${CHECK_COST.toLocaleString("vi-VN")}đ để check`,
+          message: `Số dư không đủ. Cần ${CHECK_COST.toLocaleString(
+            "vi-VN"
+          )}đ để check`,
           balance: user.balance,
         },
         { status: 402 }
@@ -129,18 +157,20 @@ export async function POST(req: Request) {
     });
 
     const vubelData = await res.json().catch(() => null);
-if (!res.ok || !vubelData?.ok) {
-  return NextResponse.json({
-    success: false,
-    status: res.status,
-    charged: false,
-    message:
-      vubelData?.message ||
-      vubelData?.error ||
-      "Check lỗi, không trừ tiền",
-    data: vubelData,
-  });
-}
+
+    if (!res.ok || !vubelData?.ok) {
+      return NextResponse.json({
+        success: false,
+        status: res.status,
+        charged: false,
+        message:
+          vubelData?.message ||
+          vubelData?.error ||
+          "Check lỗi, không trừ tiền",
+        data: vubelData,
+      });
+    }
+
     const body = vubelData || {};
     const details =
       body?.data?.details ||
@@ -153,56 +183,139 @@ if (!res.ok || !vubelData?.ok) {
     const firstOrder = Array.isArray(details) ? details[0] : null;
     const order = firstOrder?.order || {};
     const detail = firstOrder?.detail || {};
+    const hasResult =
+  !!detail?.orderId ||
+  !!order?.orderId ||
+  !!detail?.tracking;
     const product = detail?.products?.[0] || order?.products?.[0] || {};
+if (!hasResult) {
+  return NextResponse.json({
+    success: true,
+    charged: false,
+    cached: false,
+    message: "Cookie không có đơn hàng, không trừ tiền",
+    data: vubelData,
+  });
+}
+    const doubleCheck = await prisma.tiktokCheckHistory.findUnique({
+      where: {
+        userId_sessionHash: {
+          userId,
+          sessionHash,
+        },
+      },
+    });
 
-    await prisma.$transaction([
-  prisma.user.update({
-    where: { id: userId },
+    if (doubleCheck) {
+      return NextResponse.json({
+        success: true,
+        status: 200,
+        cached: true,
+        charged: false,
+        message: "Cookie này đã được check bởi request khác, không trừ tiền",
+        data: doubleCheck.raw,
+      });
+    }
+
+    try {
+  const tx: any[] = [];
+
+  if (user.role !== "ADMIN") {
+  const updatedBalance = await prisma.user.updateMany({
+    where: {
+      id: userId,
+      balance: {
+        gte: CHECK_COST,
+      },
+    },
     data: {
       balance: {
         decrement: CHECK_COST,
       },
     },
-  }),
+  });
 
-  prisma.walletHistory.create({
-    data: {
-      userId,
-      type: "CHECK_MVD",
-      amount: -CHECK_COST,
-      note: `Check MVD TikTok - ${detail?.tracking || "Không có mã vận đơn"}`,
+  if (updatedBalance.count === 0) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Số dư không đủ",
+      },
+      { status: 402 }
+    );
+  }
+
+  tx.push(
+    prisma.walletHistory.create({
+      data: {
+        userId,
+        type: "CHECK_MVD",
+        amount: -CHECK_COST,
+        note: `Check MVD TikTok - ${
+          detail?.tracking || "Không có mã vận đơn"
+        }`,
+      },
+    })
+  );
+}
+
+  tx.push(
+    prisma.tiktokCheckHistory.create({
+      data: {
+        userId,
+        sessionHash,
+        cost: user.role === "ADMIN" ? 0 : CHECK_COST,
+apiCost: VUBEL_COST,
+profit: user.role === "ADMIN" ? -VUBEL_COST : CHECK_COST - VUBEL_COST,
+        status: detail?.status || order?.status || "",
+        orderId: detail?.orderId || order?.orderId || "",
+        trackingNo: detail?.tracking || "",
+        shopName: detail?.shop || order?.shop || "",
+        product: product?.name || "",
+        total: detail?.total || order?.total || "",
+        carrierName: detail?.carrierName || "",
+        shipperName: detail?.shipperName || "",
+        shipperPhone: detail?.shipperPhone || "",
+        phone: detail?.address?.phone || "",
+        address: detail?.address?.fullAddress || "",
+        raw: vubelData,
+      },
+    })
+  );
+
+    await prisma.$transaction(tx);
+} catch (err: any) {
+  const cachedAfterError = await prisma.tiktokCheckHistory.findUnique({
+    where: {
+      userId_sessionHash: {
+        userId,
+        sessionHash,
+      },
     },
-  }),
+  });
 
-  prisma.tiktokCheckHistory.create({
-        data: {
-          userId,
-          sessionHash,
-          cost: CHECK_COST,
-          status: detail?.status || order?.status || "",
-          orderId: detail?.orderId || order?.orderId || "",
-          trackingNo: detail?.tracking || "",
-          shopName: detail?.shop || order?.shop || "",
-          product: product?.name || "",
-          total: detail?.total || order?.total || "",
-          carrierName: detail?.carrierName || "",
-          shipperName: detail?.shipperName || "",
-          shipperPhone: detail?.shipperPhone || "",
-          phone: detail?.address?.phone || "",
-          address: detail?.address?.fullAddress || "",
-          raw: vubelData,
-        },
-      }),
-    ]);
-
+  if (cachedAfterError) {
     return NextResponse.json({
-      success: res.ok,
-      status: res.status,
-      cached: false,
-      charged: true,
-      cost: CHECK_COST,
-      data: vubelData,
+      success: true,
+      status: 200,
+      cached: true,
+      charged: false,
+      message: "Cookie này đã check rồi, không trừ thêm tiền",
+      data: cachedAfterError.raw,
     });
+  }
+
+  throw err;
+}
+
+return NextResponse.json({
+  success: res.ok,
+  status: res.status,
+  cached: false,
+  charged: user.role !== "ADMIN",
+  cost: user.role === "ADMIN" ? 0 : CHECK_COST,
+  data: vubelData,
+});
   } catch (error) {
     return NextResponse.json(
       {

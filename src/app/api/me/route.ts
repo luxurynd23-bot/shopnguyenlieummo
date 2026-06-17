@@ -49,7 +49,15 @@ export async function GET(req: Request) {
         { status: 401 }
       );
     }
-
+const totalCheckSpent = await prisma.walletHistory.aggregate({
+  where: {
+    userId: user.id,
+    type: "CHECK_MVD",
+  },
+  _sum: {
+    amount: true,
+  },
+});
     if (user.isBanned) {
       return NextResponse.json(
         {
@@ -61,8 +69,9 @@ export async function GET(req: Request) {
     }
 
     return NextResponse.json({
-      user,
-    });
+  user,
+  totalCheckSpent: Math.abs(totalCheckSpent._sum.amount || 0),
+});
   } catch {
     return NextResponse.json(
       { user: null },

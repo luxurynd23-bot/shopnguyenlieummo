@@ -25,11 +25,50 @@ export default function AdminWalletHistoryPage() {
   function money(value: any) {
     return Number(value || 0).toLocaleString("vi-VN") + "đ";
   }
+function exportExcel() {
+  const html = `
+    <table border="1">
+      <tr>
+        <th>User</th>
+        <th>Email</th>
+        <th>Loại</th>
+        <th>Số tiền</th>
+        <th>Ghi chú</th>
+        <th>Thời gian</th>
+      </tr>
+      ${filtered
+        .map(
+          (x) => `
+        <tr>
+          <td>${x.user?.name || ""}</td>
+          <td>${x.user?.email || ""}</td>
+          <td>${typeLabel(x.type)}</td>
+          <td>${Number(x.amount || 0).toLocaleString("vi-VN")}đ</td>
+          <td>${x.note || ""}</td>
+          <td>${new Date(x.createdAt).toLocaleString("vi-VN")}</td>
+        </tr>
+      `
+        )
+        .join("")}
+    </table>
+  `;
 
+  const blob = new Blob([html], {
+    type: "application/vnd.ms-excel",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `lich-su-vi-${Date.now()}.xls`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
   function typeLabel(t: string) {
     if (t === "DEPOSIT") return "💳 Nạp tiền";
     if (t === "PURCHASE") return "🛒 Mua hàng";
     if (t === "REFERRAL") return "🎁 Hoa hồng";
+    if (t === "CHECK_MVD") return "📦 Check MVD";
     if (t === "ADMIN_ADD") return "➕ Admin cộng";
     if (t === "ADMIN_MINUS") return "➖ Admin trừ";
     return t;
@@ -44,7 +83,21 @@ export default function AdminWalletHistoryPage() {
 
     return matchType && text.includes(keyword.toLowerCase());
   });
+const totalDeposit = filtered
+  .filter((x) => x.type === "DEPOSIT")
+  .reduce((s, x) => s + Number(x.amount || 0), 0);
 
+const totalPurchase = filtered
+  .filter((x) => x.type === "PURCHASE")
+  .reduce((s, x) => s + Number(x.amount || 0), 0);
+
+const totalCheckMVD = filtered
+  .filter((x) => x.type === "CHECK_MVD")
+  .reduce((s, x) => s + Math.abs(Number(x.amount || 0)), 0);
+
+const totalReferral = filtered
+  .filter((x) => x.type === "REFERRAL")
+  .reduce((s, x) => s + Number(x.amount || 0), 0);
   return (
     <main style={styles.page}>
       <AdminNav />
@@ -52,9 +105,15 @@ export default function AdminWalletHistoryPage() {
       <div style={styles.headerBox}>
         <h1 style={styles.title}>📜 Lịch sử ví toàn hệ thống</h1>
 
-        <button onClick={loadItems} style={styles.reloadBtn}>
-          ↻ Tải lại
-        </button>
+        <div style={{ display: "flex", gap: 10 }}>
+  <button onClick={loadItems} style={styles.reloadBtn}>
+    ↻ Tải lại
+  </button>
+
+  <button onClick={exportExcel} style={styles.exportBtn}>
+    Export Excel
+  </button>
+</div>
       </div>
 
       <div style={styles.box}>
@@ -73,6 +132,7 @@ export default function AdminWalletHistoryPage() {
           <option value="ALL">Tất cả</option>
           <option value="DEPOSIT">Nạp tiền</option>
           <option value="PURCHASE">Mua hàng</option>
+          <option value="CHECK_MVD">Check MVD</option>
           <option value="REFERRAL">Hoa hồng</option>
           <option value="ADMIN_ADD">Admin cộng</option>
           <option value="ADMIN_MINUS">Admin trừ</option>
@@ -82,6 +142,31 @@ export default function AdminWalletHistoryPage() {
           Tổng hiển thị: <b>{filtered.length}</b>
         </div>
       </div>
+
+      <div style={styles.tableBox}>
+        </div>
+
+<div style={styles.statsGrid}>
+  <div style={styles.statCard}>
+    <div>Tổng nạp</div>
+    <b style={{ color: "#22c55e" }}>{money(totalDeposit)}</b>
+  </div>
+
+  <div style={styles.statCard}>
+    <div>Tổng mua hàng</div>
+    <b style={{ color: "#ef4444" }}>{money(totalPurchase)}</b>
+  </div>
+
+  <div style={styles.statCard}>
+    <div>Tổng Check MVD</div>
+    <b style={{ color: "#f59e0b" }}>{money(totalCheckMVD)}</b>
+  </div>
+
+  <div style={styles.statCard}>
+    <div>Tổng hoa hồng</div>
+    <b style={{ color: "#22c55e" }}>{money(totalReferral)}</b>
+  </div>
+</div>
 
       <div style={styles.tableBox}>
         <table style={styles.table}>
@@ -109,14 +194,17 @@ export default function AdminWalletHistoryPage() {
                   style={{
                     ...styles.td,
                     color:
-                      item.type === "PURCHASE" ||
-                      item.type === "ADMIN_MINUS"
-                        ? "#ef4444"
-                        : "#22c55e",
+  item.type === "PURCHASE" ||
+  item.type === "ADMIN_MINUS" ||
+  item.type === "CHECK_MVD"
+    ? "#ef4444"
+    : "#22c55e",
                     fontWeight: 900,
                   }}
                 >
-                  {item.type === "PURCHASE" || item.type === "ADMIN_MINUS"
+                  {item.type === "PURCHASE" ||
+ item.type === "ADMIN_MINUS" ||
+ item.type === "CHECK_MVD"
                     ? "-"
                     : "+"}
                   {money(item.amount)}
@@ -233,7 +321,15 @@ const styles: any = {
     cursor: "pointer",
     fontWeight: 800,
   },
-
+exportBtn: {
+  background: "#16a34a",
+  color: "white",
+  border: 0,
+  padding: "10px 14px",
+  borderRadius: 8,
+  cursor: "pointer",
+  fontWeight: 800,
+},
   box: {
     display: "grid",
     gridTemplateColumns: "1fr 220px 160px",
@@ -268,7 +364,19 @@ const styles: any = {
     alignItems: "center",
     color: "#cbd5e1",
   },
+statsGrid: {
+  display: "grid",
+  gridTemplateColumns: "repeat(4, 1fr)",
+  gap: 12,
+  marginBottom: 20,
+},
 
+statCard: {
+  background: "#111827",
+  border: "1px solid rgba(255,255,255,.12)",
+  borderRadius: 12,
+  padding: 18,
+},
   tableBox: {
     background: "#111827",
     borderRadius: 12,
