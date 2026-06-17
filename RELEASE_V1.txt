@@ -1,0 +1,17 @@
+MMO SHOP V1 STABLE
+
+Đã hoàn thành:
+- Build OK
+- Supabase OK
+- Prisma OK
+- Login/Register OK
+- Admin OK
+- PayOS OK
+- Webhook OK
+- Mua hàng OK
+- Giao account tự động OK
+
+Lưu ý:
+- Không public .env
+- Backup database định kỳ
+- Theo dõi lỗi khi chạy khách thật
