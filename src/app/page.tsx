@@ -17,7 +17,8 @@ export default function Home() {
   const [keyword, setKeyword] = useState("");
   const [activeCat, setActiveCat] = useState("TẤT CẢ");
   const [showUserMenu, setShowUserMenu] = useState(false);
-
+const [sidebarOpen, setSidebarOpen] = useState(false);
+const [isMobile, setIsMobile] = useState(false);
   const [buyProduct, setBuyProduct] = useState<any>(null);
 const [buyQty, setBuyQty] = useState(1);
 const [loadingBuy, setLoadingBuy] = useState(false);
@@ -148,8 +149,26 @@ async function loadData() {
 }
 
   useEffect(() => {
-    loadData();
-  }, []);
+  loadData();
+
+  const handleResize = () => {
+    const mobile = window.innerWidth < 992;
+
+    setIsMobile(mobile);
+
+    if (!mobile) {
+      setSidebarOpen(true);
+    }
+  };
+
+  handleResize();
+
+  window.addEventListener("resize", handleResize);
+
+  return () => {
+    window.removeEventListener("resize", handleResize);
+  };
+}, []);
 
   function openBuyPopup(product: any) {
     if (!user) {
@@ -292,7 +311,13 @@ function getNextRankInfo(totalDeposit: number) {
 
   return (
     <div style={styles.page}>
-      <aside style={styles.sidebar}>
+      <aside
+  style={{
+    ...styles.sidebar,
+    transform: sidebarOpen ? "translateX(0)" : "translateX(-280px)",
+  }}
+>
+
         <div style={styles.logoBox}>
           <img src="/tiktok-logo.png" style={styles.logoImg} />
           <div>
@@ -379,11 +404,30 @@ function getNextRankInfo(totalDeposit: number) {
           )}
         </nav>
       </aside>
+      {sidebarOpen && (
+  <div
+    onClick={() => setSidebarOpen(false)}
+    style={styles.overlay}
+  />
+)}
 
-      <main style={styles.main}>
+      <main
+  style={{
+    ...styles.main,
+    marginLeft: isMobile ? 0 : 260,
+    width: isMobile ? "100%" : "calc(100% - 260px)",
+  }}
+>
         <header style={styles.header}>
           <div style={styles.headerLeft}>
-            <button style={styles.menuBtn}>☰</button>
+            <button
+  type="button"
+  onClick={() => setSidebarOpen((prev) => !prev)}
+  style={styles.floatMenuBtn}
+>
+  ☰
+</button>
+
             <div style={styles.searchWrap}>
               <input
                 placeholder="Tìm sản phẩm..."
@@ -815,16 +859,27 @@ const styles: any = {
   sidebar: {
   width: 260,
   height: "100vh",
-  minHeight: "100vh",
-  background: "linear-gradient(180deg,#111318,#050608)",
-  borderRight: "1px solid rgba(255,255,255,.08)",
-  color: "white",
+
+  background:
+    "linear-gradient(180deg,#111318,#050608)",
+
   position: "fixed",
-  left: 0,
+
   top: 0,
-  zIndex: 20,
+
+  left: 0,
+
+  zIndex: 9999,
+
+  transition: "all .25s ease",
+
   overflowY: "auto",
+
   overflowX: "hidden",
+
+  borderRight:
+    "1px solid rgba(255,255,255,.08)",
+
   paddingBottom: 100,
 },
 
@@ -916,12 +971,10 @@ logoBox: {
   },
 
   main: {
-    marginLeft: 260,
-    width: "calc(100% - 260px)",
-    minHeight: "100vh",
-    background:
-      "radial-gradient(circle at top right,rgba(236,72,153,.16),transparent 28%), radial-gradient(circle at top left,rgba(34,211,238,.12),transparent 26%), #090b10",
-  },
+  minHeight: "100vh",
+  background:
+    "radial-gradient(circle at top right,rgba(236,72,153,.16),transparent 28%), radial-gradient(circle at top left,rgba(34,211,238,.12),transparent 26%), #090b10",
+},
 
   header: {
     height: 76,
@@ -956,7 +1009,7 @@ logoBox: {
   },
 
   search: {
-    width: 360,
+  width: "min(360px, calc(100vw - 130px))",
     background: "#0f1117",
     color: "white",
     border: "1px solid rgba(255,255,255,.12)",
@@ -1188,7 +1241,7 @@ logoBox: {
     borderRight: "2px solid #ff2b6d",
     borderLeft: "1px solid #22d3ee",
     borderRadius: 12,
-    overflow: "hidden",
+    overflowX: "auto",
   },
 
   groupTitle: {
@@ -1218,6 +1271,7 @@ logoBox: {
     fontWeight: 900,
     padding: "18px 28px",
     borderBottom: "1px solid rgba(255,255,255,.09)",
+    minWidth: 900,
   },
 
   tableRow: {
@@ -1226,6 +1280,7 @@ logoBox: {
     alignItems: "center",
     padding: "16px 28px",
     borderBottom: "1px solid rgba(255,255,255,.07)",
+    minWidth: 900,
   },
 
   productInfo: {
@@ -1536,4 +1591,25 @@ adminBtn: {
     color: "white",
     fontWeight: 900,
   },
+  floatMenuBtn: {
+  position: "fixed",
+  top: 14,
+  left: 14,
+  width: 44,
+  height: 44,
+  borderRadius: 10,
+  border: "1px solid rgba(255,255,255,.2)",
+  background: "#111827",
+  color: "#fff",
+  fontSize: 24,
+  cursor: "pointer",
+  zIndex: 99999,
+},
+
+overlay: {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0,0,0,.6)",
+  zIndex: 9998,
+},
 };
