@@ -332,7 +332,17 @@ function getNextRankInfo(totalDeposit: number) {
     <a href="/admin/users" style={styles.adminBtn}>
       👤 Users
     </a>
+<a href="/admin/pe-dao-check" style={styles.adminBtn}>
+  📦 Check MVD
+</a>
 
+<a href="/admin/all-check-history" style={styles.adminBtn}>
+  🧾 Lịch sử MVD
+</a>
+
+<a href="/admin/check-stats" style={styles.adminBtn}>
+  📊 Thống kê MVD
+</a>
     <a href="/admin/tickets" style={styles.adminBtn}>
       🎫 Tickets
     </a>
@@ -348,6 +358,10 @@ function getNextRankInfo(totalDeposit: number) {
           <a href="/orders" style={styles.navItem}>📋 Lịch Sử Mua Hàng</a>
           <a href="/deposit" style={styles.navItem}>🏦 Ngân Hàng</a>
           <a href="/deposit-history" style={styles.navItem}>🧾 Hoá Đơn</a>
+          <a href="/check-mvd" style={styles.navItem}>
+  📦 Check Vận Đơn
+</a>
+<a href="/account/check-history" style={styles.navItem}>🧾 Lịch Sử Check</a>
           <a href="/support" style={styles.navItem}>🎫 Hỗ Trợ</a>
           <a href="/rank">🏆 Bảng Xếp Hạng</a>
           <a href="/settings" style={styles.navItem}>⚙️ Cài Đặt</a>
@@ -359,6 +373,8 @@ function getNextRankInfo(totalDeposit: number) {
               <a href="/admin" style={styles.navItem}>📦 Sản phẩm</a>
               <a href="/admin/orders" style={styles.navItem}>📋 Đơn hàng</a>
               <a href="/admin/users" style={styles.navItem}>👤 Users</a>
+              <a href="/admin/pe-dao-check" style={styles.navItem}>📦 Check MVD</a>
+<a href="/admin/all-check-history" style={styles.navItem}>🧾 Lịch sử MVD</a>
             </>
           )}
         </nav>
@@ -797,18 +813,22 @@ const styles: any = {
   },
 
   sidebar: {
-    width: 260,
-    minHeight: "100vh",
-    background: "linear-gradient(180deg,#111318,#050608)",
-    borderRight: "1px solid rgba(255,255,255,.08)",
-    color: "white",
-    position: "fixed",
-    left: 0,
-    top: 0,
-    zIndex: 20,
-  },
+  width: 260,
+  height: "100vh",
+  minHeight: "100vh",
+  background: "linear-gradient(180deg,#111318,#050608)",
+  borderRight: "1px solid rgba(255,255,255,.08)",
+  color: "white",
+  position: "fixed",
+  left: 0,
+  top: 0,
+  zIndex: 20,
+  overflowY: "auto",
+  overflowX: "hidden",
+  paddingBottom: 100,
+},
 
-  logoBox: {
+logoBox: {
     height: 78,
     display: "flex",
     alignItems: "center",

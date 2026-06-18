@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
+import { sendTelegram } from "@/lib/telegram";
 
 export async function POST(req: Request) {
   try {
@@ -47,7 +48,12 @@ export async function POST(req: Request) {
         referralBalance: 0,
       },
     });
+await sendTelegram(`
+🎁 <b>RÚT HOA HỒNG</b>
 
+👤 User ID: ${user.id}
+💰 Số tiền: ${user.referralBalance.toLocaleString("vi-VN")}đ
+`);
     return NextResponse.json({
       message: "Đã chuyển hoa hồng vào số dư chính",
     });

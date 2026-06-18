@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendTelegram } from "@/lib/telegram";
 
 function getVipLevel(totalDeposit: number) {
   if (totalDeposit >= 50000000) return "DIAMOND";
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
 
     let commissionAmount = 0;
     let newVipLevel = "BRONZE";
-
+let depositUserEmail = "";
     await prisma.$transaction(async (tx) => {
       await tx.deposit.update({
         where: { id: deposit.id },
@@ -84,21 +85,24 @@ export async function POST(req: Request) {
       });
 
       const updatedUser = await tx.user.update({
-        where: { id: deposit.userId },
-        data: {
-          balance: {
-            increment: deposit.amount,
-          },
-          totalDeposit: {
-            increment: deposit.amount,
-          },
-        },
-        select: {
-          id: true,
-          totalDeposit: true,
-          referredBy: true,
-        },
-      });
+  where: { id: deposit.userId },
+  data: {
+    balance: {
+      increment: deposit.amount,
+    },
+    totalDeposit: {
+      increment: deposit.amount,
+    },
+  },
+  select: {
+    id: true,
+    email: true,
+    totalDeposit: true,
+    referredBy: true,
+  },
+});
+
+depositUserEmail = updatedUser.email;
 
       await tx.walletHistory.create({
         data: {
@@ -162,7 +166,16 @@ export async function POST(req: Request) {
         }
       }
     });
+await sendTelegram(`
+💳 <b>NẠP TIỀN THÀNH CÔNG</b>
 
+👤 User: ${depositUserEmail || deposit.userId}
+💰 Số tiền: ${deposit.amount.toLocaleString("vi-VN")}đ
+🏦 Cổng: PayOS
+🧾 Mã nạp: ${orderCode}
+🎖 VIP mới: ${newVipLevel}
+${commissionAmount > 0 ? `🎁 Hoa hồng: ${commissionAmount.toLocaleString("vi-VN")}đ` : ""}
+`);
     return NextResponse.json({
       ok: true,
       message: "Cộng tiền thành công",
@@ -171,7 +184,13 @@ export async function POST(req: Request) {
       vipLevel: newVipLevel,
     });
   } catch (error: any) {
-    return NextResponse.json(
+  await sendTelegram(`
+🚨 <b>LỖI PAYOS WEBHOOK</b>
+
+❌ ${error?.message || String(error)}
+`);
+
+  return NextResponse.json(
       {
         ok: false,
         message: "Lỗi webhook",

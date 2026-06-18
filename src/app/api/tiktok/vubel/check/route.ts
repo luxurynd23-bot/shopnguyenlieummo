@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { sendTelegram } from "@/lib/telegram";
 
 const prisma = new PrismaClient();
 const CHECK_COST = 500;
@@ -284,6 +285,18 @@ profit: user.role === "ADMIN" ? -VUBEL_COST : CHECK_COST - VUBEL_COST,
   );
 
     await prisma.$transaction(tx);
+    await sendTelegram(`
+📦 <b>CHECK MVD</b>
+
+👤 User ID: ${userId}
+🚚 MVD: ${detail?.tracking || "Không có"}
+🏪 Shop: ${detail?.shop || order?.shop || "Không có"}
+💰 Thu: ${
+  user.role === "ADMIN"
+    ? "Admin miễn phí"
+    : CHECK_COST.toLocaleString("vi-VN") + "đ"
+}
+`);
 } catch (err: any) {
   const cachedAfterError = await prisma.tiktokCheckHistory.findUnique({
     where: {
@@ -293,7 +306,6 @@ profit: user.role === "ADMIN" ? -VUBEL_COST : CHECK_COST - VUBEL_COST,
       },
     },
   });
-
   if (cachedAfterError) {
     return NextResponse.json({
       success: true,
@@ -316,8 +328,14 @@ return NextResponse.json({
   cost: user.role === "ADMIN" ? 0 : CHECK_COST,
   data: vubelData,
 });
-  } catch (error) {
-    return NextResponse.json(
+  } catch (error: any) {
+  await sendTelegram(`
+🚨 <b>LỖI CHECK MVD</b>
+
+❌ ${error?.message || String(error)}
+`);
+
+  return NextResponse.json(
       {
         success: false,
         message: "Lỗi check Pé Đào",

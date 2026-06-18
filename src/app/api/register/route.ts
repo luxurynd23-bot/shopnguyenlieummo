@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { sendTelegram } from "@/lib/telegram";
 
 const schema = z.object({
   email: z.string().email("Email không hợp lệ"),
@@ -84,7 +85,13 @@ export async function POST(req: Request) {
         role: "USER",
       },
     });
+await sendTelegram(`
+🆕 <b>USER MỚI ĐĂNG KÝ</b>
 
+📧 Email: ${user.email}
+👤 Tên: ${user.name || "Không có"}
+🆔 User ID: ${user.id}
+`);
     return NextResponse.json({
       message: "Đăng ký thành công",
       user: {

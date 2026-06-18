@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
+import { sendTelegram } from "@/lib/telegram";
 
 async function getAdminUser(req: Request) {
   const cookie = req.headers.get("cookie") || "";
@@ -76,14 +77,16 @@ export async function POST(req: Request) {
   }
 
   const targetUser = await prisma.user.findUnique({
-    where: { id: body.userId },
-    select: {
-      id: true,
-      balance: true,
-      role: true,
-      isBanned: true,
-    },
-  });
+  where: { id: body.userId },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    balance: true,
+    role: true,
+    isBanned: true,
+  },
+});
 
   if (!targetUser) {
     return NextResponse.json(
@@ -198,7 +201,14 @@ export async function POST(req: Request) {
         note: type === "minus" ? "Admin trừ tiền" : "Admin cộng tiền",
       },
     });
+await sendTelegram(`
+💰 <b>ADMIN CHỈNH SỐ DƯ</b>
 
+👤 User: ${targetUser.email}
+🆔 User ID: ${targetUser.id}
+🔧 Hành động: ${type === "minus" ? "Trừ tiền" : "Cộng tiền"}
+💵 Số tiền: ${amount.toLocaleString("vi-VN")}đ
+`);
     return NextResponse.json({
       message: "Đã cập nhật số dư",
       user,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
+import { sendTelegram } from "@/lib/telegram";
 
 async function getUser(req: Request) {
   const cookie = req.headers.get("cookie") || "";
@@ -94,7 +95,14 @@ export async function POST(req: Request) {
       message,
     },
   });
+await sendTelegram(`
+🎫 <b>TICKET MỚI</b>
 
+👤 User: ${user.email}
+📝 Tiêu đề: ${title}
+💬 Nội dung: ${message}
+🆔 Ticket ID: ${ticket.id}
+`);
   return NextResponse.json({
     message: "Đã gửi hỗ trợ",
     ticket,

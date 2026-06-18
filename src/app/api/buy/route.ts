@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
+import { sendTelegram } from "@/lib/telegram";
 
 function getVipDiscount(vipLevel: string) {
   if (vipLevel === "DIAMOND") return 10;
@@ -193,10 +194,12 @@ export async function POST(req: Request) {
       }
 
       return {
-        order: createdOrder,
-        product,
-        accounts,
-        subtotal,
+  order: createdOrder,
+  product,
+  userEmail: user.email,
+  qty,
+  accounts,
+  subtotal,
         couponDiscount,
         vipDiscount,
         vipPercent,
@@ -204,7 +207,15 @@ export async function POST(req: Request) {
         total: finalTotal,
       };
     });
+await sendTelegram(`
+🛒 <b>ĐƠN HÀNG MỚI</b>
 
+👤 User: ${result.userEmail}
+📦 Sản phẩm: ${result.product.name}
+🔢 Số lượng: ${result.qty}
+💰 Thanh toán: ${result.total.toLocaleString("vi-VN")}đ
+🧾 Order ID: ${result.order.id}
+`);
     return NextResponse.json({
       message: `Mua thành công ${qty} tài khoản`,
       orderId: result.order.id,
@@ -218,7 +229,14 @@ export async function POST(req: Request) {
       total: result.total,
     });
   } catch (error: any) {
-    return NextResponse.json(
+
+  await sendTelegram(`
+🚨 <b>LỖI MUA HÀNG</b>
+
+❌ ${error?.message || String(error)}
+  `);
+
+  return NextResponse.json(
       {
         message: error?.message || "Lỗi mua hàng",
       },
