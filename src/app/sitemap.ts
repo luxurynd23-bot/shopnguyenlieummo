@@ -1,4 +1,4 @@
-import { MetadataRoute } from "next";
+import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
@@ -11,10 +11,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: "https://shopnguyenlieummo.uk/login",
       lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
     },
     {
       url: "https://shopnguyenlieummo.uk/register",
       lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
     },
   ];
 }
