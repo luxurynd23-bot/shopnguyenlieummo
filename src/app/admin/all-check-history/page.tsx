@@ -7,6 +7,12 @@ export default function AdminAllCheckHistoryPage() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedRaw, setSelectedRaw] = useState<any>(null);
+  const [profitStats, setProfitStats] = useState<any>({
+  totalChecks: 0,
+  totalRevenue: 0,
+  totalApiCost: 0,
+  totalProfit: 0,
+});
 
   async function load() {
     setLoading(true);
@@ -17,7 +23,29 @@ export default function AdminAllCheckHistoryPage() {
     setItems(data.history || []);
     setLoading(false);
   }
+async function loadProfitStats() {
+  try {
+    const res = await fetch("/api/admin/check-profit", {
+      cache: "no-store",
+    });
 
+    const data = await res.json();
+
+    setProfitStats({
+      totalChecks: data.totalChecks || 0,
+      totalRevenue: data.totalRevenue || 0,
+      totalApiCost: data.totalApiCost || 0,
+      totalProfit: data.totalProfit || 0,
+    });
+  } catch {
+    setProfitStats({
+      totalChecks: 0,
+      totalRevenue: 0,
+      totalApiCost: 0,
+      totalProfit: 0,
+    });
+  }
+}
   function exportExcel() {
     const html = `
       <table border="1">
@@ -77,14 +105,40 @@ export default function AdminAllCheckHistoryPage() {
   }
 
   useEffect(() => {
-    load();
-  }, []);
+  load();
+  loadProfitStats();
+}, []);
 
   return (
     <div style={page}>
       <a href="/" style={backBtn}>← Về trang chủ</a>
       <h1>Admin - Lịch sử Check MVD</h1>
+<div style={statGrid}>
+  <div style={statCard}>
+    📦 {profitStats.totalChecks.toLocaleString("vi-VN")}
+    <div style={statLabel}>Tổng lượt check</div>
+  </div>
 
+  <div style={statCard}>
+    💰 {profitStats.totalRevenue.toLocaleString("vi-VN")}đ
+    <div style={statLabel}>Tổng thu</div>
+  </div>
+
+  <div style={statCard}>
+    🔌 {profitStats.totalApiCost.toLocaleString("vi-VN")}đ
+    <div style={statLabel}>Phí API</div>
+  </div>
+
+  <div
+    style={{
+      ...statCard,
+      color: profitStats.totalProfit >= 0 ? "#22c55e" : "#ef4444",
+    }}
+  >
+    📈 {profitStats.totalProfit.toLocaleString("vi-VN")}đ
+    <div style={statLabel}>Lợi nhuận</div>
+  </div>
+</div>
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <input
           value={q}
@@ -317,4 +371,25 @@ const backBtn: any = {
   textDecoration: "none",
   fontWeight: 900,
   marginBottom: 18,
+};
+const statGrid: any = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
+  gap: 14,
+  marginBottom: 18,
+};
+
+const statCard: any = {
+  background: "#020617",
+  border: "1px solid #334155",
+  borderRadius: 10,
+  padding: 16,
+  fontWeight: 900,
+  fontSize: 20,
+};
+
+const statLabel: any = {
+  fontSize: 13,
+  color: "#94a3b8",
+  marginTop: 8,
 };
