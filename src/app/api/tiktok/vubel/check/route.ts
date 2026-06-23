@@ -267,7 +267,7 @@ if (!hasResult) {
         sessionHash,
         cost: user.role === "ADMIN" ? 0 : CHECK_COST,
 apiCost: VUBEL_COST,
-profit: user.role === "ADMIN" ? -VUBEL_COST : CHECK_COST - VUBEL_COST,
+profit: user.role === "ADMIN" ? 0 : CHECK_COST - VUBEL_COST,
         status: detail?.status || order?.status || "",
         orderId: detail?.orderId || order?.orderId || "",
         trackingNo: detail?.tracking || "",

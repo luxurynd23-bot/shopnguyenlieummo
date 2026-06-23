@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { PayOS } from "@payos/node";
 import jwt from "jsonwebtoken";
-
-const prisma = new PrismaClient();
 
 const payOS = new PayOS({
   clientId: process.env.PAYOS_CLIENT_ID!,
@@ -59,7 +57,10 @@ export async function POST(req: Request) {
       returnUrl: `${APP_URL}/wallet`,
     });
 
-    return NextResponse.json({ checkoutUrl: paymentLink.checkoutUrl });
+    return NextResponse.json({
+  checkoutUrl: paymentLink.checkoutUrl,
+  orderCode,
+});
   } catch (error: any) {
     console.error("PAYOS ERROR:", error);
 

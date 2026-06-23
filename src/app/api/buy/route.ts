@@ -174,13 +174,13 @@ export async function POST(req: Request) {
       });
 
       await tx.walletHistory.create({
-        data: {
-          userId: user.id,
-          type: "BUY",
-          amount: finalTotal,
-          note: `Mua ${qty} ${product.name}`,
-        },
-      });
+  data: {
+    userId: user.id,
+    type: "BUY",
+    amount: -finalTotal,
+    note: `Mua ${qty} ${product.name}`,
+  },
+});
 
       if (couponName && couponDiscount > 0) {
         await tx.couponUsage.create({
