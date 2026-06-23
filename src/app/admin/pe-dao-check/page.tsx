@@ -37,6 +37,7 @@ export default function PeDaoCheckPage() {
   const [selectedRaw, setSelectedRaw] = useState<any>(null);
   const [apiBalance, setApiBalance] = useState<string | number>("");
   const [user, setUser] = useState<any>(null);
+  const [serverHistory, setServerHistory] = useState<any[]>([]);
 
   useEffect(() => {
     try {
@@ -46,8 +47,9 @@ export default function PeDaoCheckPage() {
   }, []);
 
   useEffect(() => {
-    reloadUser();
-  }, []);
+  reloadUser();
+  loadServerHistory();
+}, []);
 
   async function reloadUser() {
     try {
@@ -58,7 +60,18 @@ export default function PeDaoCheckPage() {
       setUser(null);
     }
   }
+async function loadServerHistory() {
+  try {
+    const res = await fetch("/api/tiktok/check-history", {
+      cache: "no-store",
+    });
 
+    const data = await res.json();
+    setServerHistory(data.history || []);
+  } catch {
+    setServerHistory([]);
+  }
+}
   function saveRows(nextRows: Row[]) {
     setRows(nextRows);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(nextRows));
@@ -217,7 +230,8 @@ export default function PeDaoCheckPage() {
       checking: false,
     };
     saveRows(nextRows);
-    await reloadUser();
+await reloadUser();
+await loadServerHistory();
   }
 
   async function checkAll() {
@@ -266,8 +280,9 @@ export default function PeDaoCheckPage() {
       });
 
       saveRows(workingRows);
-      await reloadUser();
-      await delay(900);
+await reloadUser();
+await loadServerHistory();
+await delay(900);
     }
 
     setCheckingAll(false);
@@ -534,7 +549,49 @@ export default function PeDaoCheckPage() {
           </tbody>
         </table>
       </div>
+<div style={{ marginTop: 30 }}>
+  <h2>📜 Lịch sử Check MVD</h2>
 
+  <div style={styles.tableWrap}>
+    <table style={styles.table}>
+      <thead>
+        <tr>
+          <th style={styles.th}>Thời gian</th>
+          <th style={styles.th}>Mã đơn</th>
+          <th style={styles.th}>Mã vận đơn</th>
+          <th style={styles.th}>Shop</th>
+          <th style={styles.th}>Sản phẩm</th>
+          <th style={styles.th}>Tổng tiền</th>
+          <th style={styles.th}>Đơn vị VC</th>
+          <th style={styles.th}>Shipper</th>
+          <th style={styles.th}>SĐT Shipper</th>
+          <th style={styles.th}>Phí</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {serverHistory.map((r) => (
+          <tr key={r.id}>
+            <td style={styles.td}>
+              {new Date(r.createdAt).toLocaleString("vi-VN")}
+            </td>
+            <td style={styles.td}>{r.orderId}</td>
+            <td style={styles.td}>{r.trackingNo}</td>
+            <td style={styles.td}>{r.shopName}</td>
+            <td style={styles.td}>{r.product}</td>
+            <td style={styles.td}>{r.total}</td>
+            <td style={styles.td}>{r.carrierName}</td>
+            <td style={styles.td}>{r.shipperName}</td>
+            <td style={styles.td}>{r.shipperPhone}</td>
+            <td style={styles.td}>
+              {Number(r.cost || 0).toLocaleString("vi-VN")}đ
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
       {selectedRaw && (
         <div style={styles.modal}>
           <div style={styles.modalBox}>
