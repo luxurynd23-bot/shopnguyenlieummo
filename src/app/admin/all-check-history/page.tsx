@@ -82,6 +82,7 @@ export default function AdminAllCheckHistoryPage() {
 
   return (
     <div style={page}>
+      <a href="/" style={backBtn}>← Về trang chủ</a>
       <h1>Admin - Lịch sử Check MVD</h1>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
@@ -174,12 +175,6 @@ export default function AdminAllCheckHistoryPage() {
 >
   {Number(x.profit || 0).toLocaleString("vi-VN")}đ
 </td>
-                <td style={td}>
-                  {Number(x.apiCost || 0).toLocaleString("vi-VN")}đ
-                </td>
-                <td style={td}>
-                  {Number(x.profit || 0).toLocaleString("vi-VN")}đ
-                </td>
 
                 <td style={td}>
                   <button style={jsonBtn} onClick={() => setSelectedRaw(x.raw)}>
@@ -315,4 +310,11 @@ const modalBox: any = {
   borderRadius: 12,
   maxHeight: "90vh",
   overflow: "auto",
+};
+const backBtn: any = {
+  display: "inline-block",
+  color: "#22d3ee",
+  textDecoration: "none",
+  fontWeight: 900,
+  marginBottom: 18,
 };

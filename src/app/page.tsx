@@ -368,6 +368,9 @@ function getNextRankInfo(totalDeposit: number) {
 <a href="/admin/check-stats" style={styles.adminBtn}>
   📊 Thống kê MVD
 </a>
+<a href="/admin/user-orders" style={styles.adminBtn}>
+  🛒 Lịch sử mua user
+</a>
     <a href="/admin/tickets" style={styles.adminBtn}>
       🎫 Tickets
     </a>
@@ -400,6 +403,9 @@ function getNextRankInfo(totalDeposit: number) {
               <a href="/admin/users" style={styles.navItem}>👤 Users</a>
               <a href="/admin/pe-dao-check" style={styles.navItem}>📦 Check MVD</a>
 <a href="/admin/all-check-history" style={styles.navItem}>🧾 Lịch sử MVD</a>
+<a href="/admin/user-orders" style={styles.navItem}>
+  🛒 Lịch sử mua user
+</a>
             </>
           )}
         </nav>
