@@ -404,7 +404,7 @@ function getNextRankInfo(totalDeposit: number) {
           )}
         </nav>
       </aside>
-      {sidebarOpen && (
+      {isMobile && sidebarOpen && (
   <div
     onClick={() => setSidebarOpen(false)}
     style={styles.overlay}
@@ -420,13 +420,15 @@ function getNextRankInfo(totalDeposit: number) {
 >
         <header style={styles.header}>
           <div style={styles.headerLeft}>
-            <button
-  type="button"
-  onClick={() => setSidebarOpen((prev) => !prev)}
-  style={styles.floatMenuBtn}
->
-  ☰
-</button>
+  {isMobile && (
+  <button
+    type="button"
+    onClick={() => setSidebarOpen((prev) => !prev)}
+    style={styles.floatMenuBtn}
+  >
+    ☰
+  </button>
+)}
 
             <div style={styles.searchWrap}>
               <input
@@ -1217,11 +1219,11 @@ logoBox: {
 
 
   categoryGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(6,1fr)",
-    gap: 14,
-    marginBottom: 24,
-  },
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
+  gap: 14,
+  marginBottom: 24,
+},
 
   catBtn: {
     height: 58,
