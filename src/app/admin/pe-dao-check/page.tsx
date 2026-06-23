@@ -406,7 +406,9 @@ export default function PeDaoCheckPage() {
           Số dư ví: {walletBalance.toLocaleString("vi-VN")}đ
         </div>
         <div style={styles.card}>Giá check: 500đ/cookie</div>
-        <div style={styles.card}>Số dư API: {apiBalance || "—"}</div>
+        {user?.role === "ADMIN" && (
+  <div style={styles.card}>Số dư API: {apiBalance || "—"}</div>
+)}
       </div>
 
       {!user && (
