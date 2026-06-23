@@ -190,6 +190,28 @@ if (
   !!detail?.tracking;
     const product = detail?.products?.[0] || order?.products?.[0] || {};
 if (!hasResult) {
+  await prisma.tiktokCheckHistory.create({
+    data: {
+      userId,
+      sessionHash,
+      cost: 0,
+      apiCost: VUBEL_COST,
+      profit: 0,
+      status: "Không có đơn hàng",
+      orderId: "",
+      trackingNo: "",
+      shopName: "",
+      product: "",
+      total: "",
+      carrierName: "",
+      shipperName: "",
+      shipperPhone: "",
+      phone: "",
+      address: "",
+      raw: vubelData,
+    },
+  });
+
   return NextResponse.json({
     success: true,
     charged: false,

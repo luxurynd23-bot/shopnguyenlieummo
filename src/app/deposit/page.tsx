@@ -12,6 +12,8 @@ export default function DepositPage() {
   const [user, setUser] = useState<any>(null);
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+const [isMobile, setIsMobile] = useState(false);
 
   async function loadUser() {
     try {
@@ -26,7 +28,16 @@ export default function DepositPage() {
   useEffect(() => {
     loadUser();
   }, []);
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth < 768);
+  };
 
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+
+  return () => window.removeEventListener("resize", checkMobile);
+}, []);
   async function createPayment(value?: number) {
     const money = Number(value || amount);
 
@@ -62,7 +73,17 @@ export default function DepositPage() {
 
   return (
     <div style={styles.page}>
-      <aside style={styles.sidebar}>
+      <aside
+  style={{
+    ...styles.sidebar,
+    transform:
+      isMobile && !sidebarOpen
+        ? "translateX(-260px)"
+        : "translateX(0)",
+    transition: "0.3s",
+    zIndex: 9999,
+  }}
+>
         <div style={styles.logoBox}>
           <img src="/tiktok-logo.png" style={styles.logoImg} />
           <div>
@@ -94,7 +115,12 @@ export default function DepositPage() {
 
       <main style={styles.main}>
         <header style={styles.header}>
-          <button style={styles.menuBtn}>☰</button>
+          <button
+  style={styles.menuBtn}
+  onClick={() => setSidebarOpen(!sidebarOpen)}
+>
+  ☰
+</button>
 
           <div style={styles.wallet}>
             💳 Ví: {(user?.balance || 0).toLocaleString("vi-VN")}đ

@@ -15,7 +15,11 @@ export default function CheckHistoryPage() {
 
   return (
     <div style={page}>
-      <h1>Lịch sử Check MVD TikTok</h1>
+  <a href="/" style={backBtn}>
+    ← Quay lại trang chủ
+  </a>
+
+  <h1>Lịch sử Check MVD TikTok</h1>
 
       {loading ? (
         <p>Đang tải...</p>
@@ -97,4 +101,11 @@ const td: any = {
   borderBottom: "1px solid #1e293b",
   borderRight: "1px solid #1e293b",
   whiteSpace: "nowrap",
+};
+const backBtn: any = {
+  display: "inline-block",
+  color: "#22d3ee",
+  textDecoration: "none",
+  fontWeight: 900,
+  marginBottom: 18,
 };

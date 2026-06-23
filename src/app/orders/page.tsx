@@ -6,6 +6,8 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [keyword, setKeyword] = useState("");
   const [user, setUser] = useState<any>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   async function loadData() {
     try {
@@ -24,7 +26,16 @@ export default function OrdersPage() {
   useEffect(() => {
     loadData();
   }, []);
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth < 768);
+  };
 
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+
+  return () => window.removeEventListener("resize", checkMobile);
+}, []);
   async function logout() {
     await fetch("/api/logout", { method: "POST" });
     window.location.href = "/login";
@@ -37,7 +48,17 @@ export default function OrdersPage() {
 
   return (
     <div style={styles.page}>
-      <aside style={styles.sidebar}>
+      <aside
+  style={{
+    ...styles.sidebar,
+    transform:
+      isMobile && !sidebarOpen
+        ? "translateX(-260px)"
+        : "translateX(0)",
+    transition: "0.3s",
+    zIndex: 9999,
+  }}
+>
         <div style={styles.logoBox}>
           <img src="/tiktok-logo.png" style={styles.logoImg} />
           <div>
@@ -67,9 +88,20 @@ export default function OrdersPage() {
         </nav>
       </aside>
 
-      <main style={styles.main}>
+      <main
+  style={{
+    ...styles.main,
+    marginLeft: isMobile ? 0 : 250,
+    width: isMobile ? "100%" : "calc(100% - 250px)",
+  }}
+>
         <header style={styles.header}>
-          <button style={styles.menuBtn}>☰</button>
+          <button
+  style={styles.menuBtn}
+  onClick={() => setSidebarOpen(!sidebarOpen)}
+>
+  ☰
+</button>
 
           <div style={styles.balanceTop}>
             💳 Ví: {(user?.balance || 0).toLocaleString("vi-VN")}đ
@@ -254,7 +286,7 @@ const styles: any = {
     cursor: "pointer",
   },
   main: {
-    marginLeft: 250,
+  marginLeft: 250,
     width: "calc(100% - 250px)",
     minHeight: "100vh",
     background:
