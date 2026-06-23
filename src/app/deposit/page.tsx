@@ -113,8 +113,21 @@ useEffect(() => {
         </nav>
       </aside>
 
-      <main style={styles.main}>
-        <header style={styles.header}>
+      <main
+  style={{
+    ...styles.main,
+    marginLeft: isMobile ? 0 : 250,
+    width: isMobile ? "100%" : "calc(100% - 250px)",
+  }}
+>
+        <header
+  style={{
+    ...styles.header,
+    position: "sticky",
+    top: 0,
+    zIndex: 20,
+  }}
+>
           <button
   style={styles.menuBtn}
   onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -323,8 +336,10 @@ const styles: any = {
     fontWeight: 800,
   },
   content: {
-    padding: 28,
-  },
+  padding: 16,
+  maxWidth: "100%",
+  overflowX: "hidden",
+},
   backBtn: {
     display: "inline-block",
     color: "#e5e7eb",
@@ -379,18 +394,14 @@ const styles: any = {
     border: "1px solid rgba(255,255,255,.10)",
   },
   bonusHead: {
-    display: "grid",
-    gridTemplateColumns: "100px 1fr 360px",
-    background: "linear-gradient(90deg,#09b6c8,#ff0f5f)",
-    color: "white",
-    fontWeight: 900,
-  },
-  bonusRow: {
-    display: "grid",
-    gridTemplateColumns: "100px 1fr 360px",
-    borderTop: "1px solid rgba(255,255,255,.08)",
-    background: "rgba(255,255,255,.02)",
-  },
+  display: "grid",
+  gridTemplateColumns: "70px 1fr 120px",
+},
+
+bonusRow: {
+  display: "grid",
+  gridTemplateColumns: "70px 1fr 120px",
+},
   card: {
     borderRadius: 14,
     padding: 18,
@@ -403,10 +414,11 @@ const styles: any = {
     color: "white",
   },
   packageGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: 18,
-  },
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
+  gap: 18,
+},
+
   packageCard: {
     minHeight: 240,
     borderRadius: 14,
