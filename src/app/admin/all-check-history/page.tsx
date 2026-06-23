@@ -13,16 +13,24 @@ export default function AdminAllCheckHistoryPage() {
   totalApiCost: 0,
   totalProfit: 0,
 });
-
+const [fromDate, setFromDate] = useState("");
+const [toDate, setToDate] = useState("");
+const [quickRange, setQuickRange] = useState("all");
   async function load() {
-    setLoading(true);
-    const res = await fetch(
-      `/api/admin/all-check-history?q=${encodeURIComponent(q)}`
-    );
-    const data = await res.json();
-    setItems(data.history || []);
-    setLoading(false);
-  }
+  setLoading(true);
+
+  const params = new URLSearchParams();
+  params.set("q", q);
+
+  if (fromDate) params.set("from", fromDate);
+  if (toDate) params.set("to", toDate);
+
+  const res = await fetch(`/api/admin/all-check-history?${params.toString()}`);
+  const data = await res.json();
+
+  setItems(data.history || []);
+  setLoading(false);
+}
 async function loadProfitStats() {
   try {
     const res = await fetch("/api/admin/check-profit", {
@@ -139,29 +147,54 @@ async function loadProfitStats() {
     <div style={statLabel}>Lợi nhuận</div>
   </div>
 </div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") load();
-          }}
-          placeholder="Tìm MVD, mã đơn, SĐT, shop, shipper..."
-          style={input}
-        />
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+  <input
+    value={q}
+    onChange={(e) => setQ(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") load();
+    }}
+    placeholder="Tìm MVD, mã đơn, SĐT, shop, shipper..."
+    style={input}
+  />
 
-        <button onClick={load} style={btn}>
-          {loading ? "Đang tìm..." : "Tìm kiếm"}
-        </button>
+  <input
+    type="date"
+    value={fromDate}
+    onChange={(e) => setFromDate(e.target.value)}
+    style={dateInput}
+  />
 
-        <button
-          onClick={exportExcel}
-          style={{ ...btn, background: "#16a34a" }}
-        >
-          Export Excel
-        </button>
-      </div>
+  <input
+    type="date"
+    value={toDate}
+    onChange={(e) => setToDate(e.target.value)}
+    style={dateInput}
+  />
 
+  <button onClick={load} style={btn}>
+    {loading ? "Đang tìm..." : "Tìm kiếm"}
+  </button>
+
+  <button
+    onClick={() => {
+      setFromDate("");
+      setToDate("");
+      setQuickRange("all");
+      setTimeout(load, 50);
+    }}
+    style={{ ...btn, background: "#475569" }}
+  >
+    Tất cả
+  </button>
+
+  <button
+    onClick={exportExcel}
+    style={{ ...btn, background: "#16a34a" }}
+  >
+    Export Excel
+  </button>
+</div>
       <div style={{ overflowX: "auto" }}>
         <table style={table}>
           <thead>
@@ -298,7 +331,13 @@ const input: any = {
   background: "#020617",
   color: "white",
 };
-
+const dateInput: any = {
+  padding: 12,
+  borderRadius: 8,
+  border: "1px solid #334155",
+  background: "#020617",
+  color: "white",
+};
 const btn: any = {
   padding: "12px 18px",
   border: 0,

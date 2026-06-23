@@ -34,20 +34,62 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "Không có quyền" }, { status: 403 });
     }
 
-    const history = await prisma.tiktokCheckHistory.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 500,
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            balance: true,
-          },
-        },
+    const { searchParams } = new URL(req.url);
+
+const q = searchParams.get("q") || "";
+const from = searchParams.get("from");
+const to = searchParams.get("to");
+
+const history = await prisma.tiktokCheckHistory.findMany({
+  where: {
+    AND: [
+      from || to
+        ? {
+            createdAt: {
+              ...(from ? { gte: new Date(from) } : {}),
+              ...(to
+                ? {
+                    lte: new Date(
+                      new Date(to).setHours(23, 59, 59, 999)
+                    ),
+                  }
+                : {}),
+            },
+          }
+        : {},
+
+      q
+        ? {
+            OR: [
+              { trackingNo: { contains: q } },
+              { orderId: { contains: q } },
+              { shopName: { contains: q } },
+              { shipperName: { contains: q } },
+              { phone: { contains: q } },
+              { product: { contains: q } },
+            ],
+          }
+        : {},
+    ],
+  },
+
+  orderBy: {
+    createdAt: "desc",
+  },
+
+  take: 500,
+
+  include: {
+    user: {
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        balance: true,
       },
-    });
+    },
+  },
+});
 
     return NextResponse.json({ history });
   } catch (error: any) {
