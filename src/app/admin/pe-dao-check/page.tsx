@@ -28,7 +28,7 @@ type Row = {
 };
 
 const HISTORY_KEY = "pedao_mvd_history";
-const CHECK_PRICE = 500;
+const CHECK_PRICE = 200;
 
 export default function PeDaoCheckPage() {
   const [input, setInput] = useState("");
@@ -78,19 +78,19 @@ async function loadServerHistory() {
   }
 
   function parseRows() {
-    const list = input
-      .split("\n")
-      .map((x) => x.trim())
-      .filter(Boolean)
-      .slice(0, 100)
-      .map((line) => ({
-        session: line.split("|")[0] || line,
-        note: "Chưa check",
-        status: "Chờ check",
-      }));
+  const list = input
+    .split("\n")
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .slice(0, 100)
+    .map((username) => ({
+      session: username,
+      note: "Chưa check",
+      status: "Chờ check",
+    }));
 
-    saveRows(list);
-  }
+  saveRows(list);
+}
 
   async function handleImportTxt(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -206,7 +206,7 @@ async function loadServerHistory() {
 
   async function checkOne(index: number) {
     if (!canCheck()) {
-      alert("Số dư không đủ. Cần 500đ/cookie để check.");
+      alert("Số dư không đủ. Cần 200đ/username để check.");
       return;
     }
 
@@ -238,7 +238,7 @@ await loadServerHistory();
     if (rows.length === 0) return;
 
     if (!canCheck()) {
-      alert("Số dư không đủ. Cần 500đ/cookie để check.");
+      alert("Số dư không đủ. Cần 200đ/username để check.");
       return;
     }
 
@@ -363,7 +363,7 @@ await delay(900);
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Dán session, mỗi dòng 1 session. Tối đa 100 session/lần."
+          placeholder="Dán username TikTok, mỗi dòng 1 username. Tối đa 100 username/lần."
           style={styles.textarea}
         />
 
@@ -420,7 +420,7 @@ await delay(900);
         <div style={styles.card}>
           Số dư ví: {walletBalance.toLocaleString("vi-VN")}đ
         </div>
-        <div style={styles.card}>Giá check: 500đ/cookie</div>
+        <div style={styles.card}>Giá check: 200đ/username</div>
         {user?.role === "ADMIN" && (
   <div style={styles.card}>Số dư API: {apiBalance || "—"}</div>
 )}
@@ -444,7 +444,7 @@ await delay(900);
             <tr>
               {[
                 "Thao tác",
-                "Session",
+                "Username",
                 "Mã Đơn",
                 "Trạng thái",
                 "Shop",
