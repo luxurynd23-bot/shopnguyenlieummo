@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { sendTelegram } from "@/lib/telegram";
 
-const prisma = new PrismaClient();
-const CHECK_COST = 500;
-const VUBEL_COST = 300;
-function getSessionHash(session: string) {
-  return crypto.createHash("sha256").update(session.trim()).digest("hex");
+const CHECK_COST = 200;
+const BAMBOO_COST = 0;
+
+function getHash(text: string) {
+  return crypto.createHash("sha256").update(text.trim()).digest("hex");
 }
 
 function getUserIdFromCookie(req: Request) {
@@ -30,11 +30,15 @@ function getUserIdFromCookie(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { session, count, proxy } = await req.json();
+    const { session } = await req.json();
 
-    if (!session) {
+    const username = String(session || "")
+      .trim()
+      .replace(/^@/, "");
+
+    if (!username) {
       return NextResponse.json(
-        { success: false, message: "Thiếu session TikTok" },
+        { success: false, message: "Thiếu username TikTok" },
         { status: 400 }
       );
     }
@@ -47,32 +51,8 @@ export async function POST(req: Request) {
         { status: 401 }
       );
     }
-const lastCheck = await prisma.tiktokCheckHistory.findFirst({
-  where: {
-    userId,
-  },
-  orderBy: {
-    createdAt: "desc",
-  },
-});
 
-if (
-  lastCheck &&
-  Date.now() - new Date(lastCheck.createdAt).getTime() < 2000
-) {
-  return NextResponse.json(
-    {
-      success: false,
-      message: "Vui lòng chờ 2 giây rồi check tiếp",
-    },
-    { status: 429 }
-  );
-}
-    const cleanSession = session.startsWith("cookies=")
-      ? session
-      : `cookies=${session}`;
-
-    const sessionHash = getSessionHash(cleanSession);
+    const sessionHash = getHash(username);
 
     const cached = await prisma.tiktokCheckHistory.findUnique({
       where: {
@@ -86,22 +66,21 @@ if (
     if (cached) {
       return NextResponse.json({
         success: true,
-        status: 200,
         cached: true,
         charged: false,
-        message: "Cookie này đã check rồi, không trừ tiền",
+        message: "Username này đã check rồi, không trừ tiền",
         data: cached.raw,
       });
     }
 
     const user = await prisma.user.findUnique({
-  where: { id: userId },
-  select: {
-    id: true,
-    balance: true,
-    role: true,
-  },
-});
+      where: { id: userId },
+      select: {
+        id: true,
+        balance: true,
+        role: true,
+      },
+    });
 
     if (!user) {
       return NextResponse.json(
@@ -110,10 +89,7 @@ if (
       );
     }
 
-    if (
-  user.role !== "ADMIN" &&
-  user.balance < CHECK_COST
-) {
+    if (user.role !== "ADMIN" && user.balance < CHECK_COST) {
       return NextResponse.json(
         {
           success: false,
@@ -126,241 +102,221 @@ if (
       );
     }
 
-    const apiKey = process.env.VUBEL_API_KEY;
-    const baseUrl = process.env.VUBEL_BASE_URL || "https://api.vubel.store";
-    const finalProxy = (proxy || process.env.VUBEL_DEFAULT_PROXY || "").trim();
-
-    if (!apiKey) {
-      return NextResponse.json(
-        { success: false, message: "Thiếu VUBEL_API_KEY" },
-        { status: 500 }
-      );
-    }
-
-    if (!finalProxy) {
-      return NextResponse.json(
-        { success: false, message: "Thiếu proxy mặc định" },
-        { status: 400 }
-      );
-    }
-
-    const res = await fetch(`${baseUrl}/v1/tiktok/detail`, {
+    const res = await fetch("https://bambootik.top/check.php", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey,
       },
       body: JSON.stringify({
-        session: cleanSession,
-        count: Number(count) || 5,
-        proxy: finalProxy,
+        usernames: [username],
       }),
     });
 
-    const vubelData = await res.json().catch(() => null);
+    const bambooData = await res.json().catch(() => null);
 
-    if (!res.ok || !vubelData?.ok) {
+    if (!res.ok || !bambooData?.status) {
       return NextResponse.json({
         success: false,
         status: res.status,
         charged: false,
-        message:
-          vubelData?.message ||
-          vubelData?.error ||
-          "Check lỗi, không trừ tiền",
-        data: vubelData,
+        message: bambooData?.message || bambooData?.msg || "Check lỗi, không trừ tiền",
+        data: bambooData,
       });
     }
 
-    const body = vubelData || {};
-    const details =
-      body?.data?.details ||
-      body?.details ||
-      body?.data?.orders ||
-      body?.orders ||
-      body?.items ||
-      [];
+    const first = bambooData?.data?.[0];
+    const info = first?.data || {};
 
-    const firstOrder = Array.isArray(details) ? details[0] : null;
-    const order = firstOrder?.order || {};
-    const detail = firstOrder?.detail || {};
-    const hasResult =
-  !!detail?.orderId ||
-  !!order?.orderId ||
-  !!detail?.tracking;
-    const product = detail?.products?.[0] || order?.products?.[0] || {};
-if (!hasResult) {
-  await prisma.tiktokCheckHistory.create({
-    data: {
-      userId,
-      sessionHash,
-      cost: 0,
-      apiCost: VUBEL_COST,
-      profit: 0,
-      status: "Không có đơn hàng",
-      orderId: "",
-      trackingNo: "",
-      shopName: "",
-      product: "",
-      total: "",
-      carrierName: "",
-      shipperName: "",
-      shipperPhone: "",
-      phone: "",
-      address: "",
-      raw: vubelData,
-    },
-  });
+    const hasResult = !!first?.status && !!info?.orderId && !!info?.tracking;
 
-  return NextResponse.json({
-    success: true,
-    charged: false,
-    cached: false,
-    message: "Cookie không có đơn hàng, không trừ tiền",
-    data: vubelData,
-  });
-}
-    const doubleCheck = await prisma.tiktokCheckHistory.findUnique({
-      where: {
-        userId_sessionHash: {
+    const mappedData = {
+      ok: true,
+      data: {
+        details: hasResult
+          ? [
+              {
+                order: {
+                  orderId: info.orderId || "",
+                  status: info.statusShip || info.status || "",
+                  total: info.totalPrice
+                    ? `${Number(info.totalPrice).toLocaleString("vi-VN")}đ`
+                    : "",
+                  shop: "",
+                  products: [
+                    {
+                      name: info.productName || "",
+                    },
+                  ],
+                },
+                detail: {
+                  orderId: info.orderId || "",
+                  tracking: info.tracking || "",
+                  status: info.statusShip || info.status || "",
+                  shop: "",
+                  total: info.totalPrice
+                    ? `${Number(info.totalPrice).toLocaleString("vi-VN")}đ`
+                    : "",
+                  carrierName: "BambooTik",
+                  shipperName: info.nameShip || "",
+                  shipperPhone: info.phoneShip || "",
+                  shippingState: info.statusShip || "",
+                  shippingNote: info.descriptionShip || "",
+                  paymentMethod: "",
+                  createdAt: info.timeCreate || "",
+                  deliveredAt: "",
+                  address: {
+                    name: info.name || "",
+                    phone: info.phone || "",
+                    fullAddress: info.address || "",
+                  },
+                  products: [
+                    {
+                      name: info.productName || "",
+                      qty: 1,
+                      price: info.totalPrice
+                        ? `${Number(info.totalPrice).toLocaleString("vi-VN")}đ`
+                        : "",
+                    },
+                  ],
+                },
+              },
+            ]
+          : [],
+      },
+      raw: bambooData,
+    };
+
+    const firstMapped: any = mappedData.data.details[0] || {};
+const detail: any = firstMapped.detail || {};
+const order: any = firstMapped.order || {};
+const product: any = detail.products?.[0] || order.products?.[0] || {};
+
+    if (!hasResult) {
+      await prisma.tiktokCheckHistory.create({
+        data: {
           userId,
           sessionHash,
+          cost: 0,
+          apiCost: BAMBOO_COST,
+          profit: 0,
+          status: "Không có đơn hàng",
+          orderId: "",
+          trackingNo: "",
+          shopName: "",
+          product: "",
+          total: "",
+          carrierName: "",
+          shipperName: "",
+          shipperPhone: "",
+          phone: "",
+          address: "",
+          raw: mappedData,
         },
-      },
-    });
+      });
 
-    if (doubleCheck) {
       return NextResponse.json({
         success: true,
-        status: 200,
-        cached: true,
+        cached: false,
         charged: false,
-        message: "Cookie này đã được check bởi request khác, không trừ tiền",
-        data: doubleCheck.raw,
+        message: "Username không có đơn hàng, không trừ tiền",
+        data: mappedData,
       });
     }
 
-    try {
-  const tx: any[] = [];
+    const tx: any[] = [];
 
-  if (user.role !== "ADMIN") {
-  const updatedBalance = await prisma.user.updateMany({
-    where: {
-      id: userId,
-      balance: {
-        gte: CHECK_COST,
-      },
-    },
-    data: {
-      balance: {
-        decrement: CHECK_COST,
-      },
-    },
-  });
+    if (user.role !== "ADMIN") {
+      const updatedBalance = await prisma.user.updateMany({
+        where: {
+          id: userId,
+          balance: {
+            gte: CHECK_COST,
+          },
+        },
+        data: {
+          balance: {
+            decrement: CHECK_COST,
+          },
+        },
+      });
 
-  if (updatedBalance.count === 0) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Số dư không đủ",
-      },
-      { status: 402 }
+      if (updatedBalance.count === 0) {
+        return NextResponse.json(
+          { success: false, message: "Số dư không đủ" },
+          { status: 402 }
+        );
+      }
+
+      tx.push(
+        prisma.walletHistory.create({
+          data: {
+            userId,
+            type: "CHECK_MVD",
+            amount: -CHECK_COST,
+            note: `Check MVD TikTok - ${detail?.tracking || username}`,
+          },
+        })
+      );
+    }
+
+    tx.push(
+      prisma.tiktokCheckHistory.create({
+        data: {
+          userId,
+          sessionHash,
+          cost: user.role === "ADMIN" ? 0 : CHECK_COST,
+          apiCost: BAMBOO_COST,
+          profit: user.role === "ADMIN" ? 0 : CHECK_COST - BAMBOO_COST,
+          status: detail?.status || order?.status || "",
+          orderId: detail?.orderId || order?.orderId || "",
+          trackingNo: detail?.tracking || "",
+          shopName: detail?.shop || order?.shop || "",
+          product: product?.name || "",
+          total: detail?.total || order?.total || "",
+          carrierName: detail?.carrierName || "",
+          shipperName: detail?.shipperName || "",
+          shipperPhone: detail?.shipperPhone || "",
+          phone: detail?.address?.phone || "",
+          address: detail?.address?.fullAddress || "",
+          raw: mappedData,
+        },
+      })
     );
-  }
-
-  tx.push(
-    prisma.walletHistory.create({
-      data: {
-        userId,
-        type: "CHECK_MVD",
-        amount: -CHECK_COST,
-        note: `Check MVD TikTok - ${
-          detail?.tracking || "Không có mã vận đơn"
-        }`,
-      },
-    })
-  );
-}
-
-  tx.push(
-    prisma.tiktokCheckHistory.create({
-      data: {
-        userId,
-        sessionHash,
-        cost: user.role === "ADMIN" ? 0 : CHECK_COST,
-apiCost: VUBEL_COST,
-profit: user.role === "ADMIN" ? 0 : CHECK_COST - VUBEL_COST,
-        status: detail?.status || order?.status || "",
-        orderId: detail?.orderId || order?.orderId || "",
-        trackingNo: detail?.tracking || "",
-        shopName: detail?.shop || order?.shop || "",
-        product: product?.name || "",
-        total: detail?.total || order?.total || "",
-        carrierName: detail?.carrierName || "",
-        shipperName: detail?.shipperName || "",
-        shipperPhone: detail?.shipperPhone || "",
-        phone: detail?.address?.phone || "",
-        address: detail?.address?.fullAddress || "",
-        raw: vubelData,
-      },
-    })
-  );
 
     await prisma.$transaction(tx);
+
     await sendTelegram(`
-📦 <b>CHECK MVD</b>
+📦 <b>CHECK MVD BAMBOO</b>
 
 👤 User ID: ${userId}
+👤 Username: ${username}
 🚚 MVD: ${detail?.tracking || "Không có"}
-🏪 Shop: ${detail?.shop || order?.shop || "Không có"}
 💰 Thu: ${
-  user.role === "ADMIN"
-    ? "Admin miễn phí"
-    : CHECK_COST.toLocaleString("vi-VN") + "đ"
-}
+      user.role === "ADMIN"
+        ? "Admin miễn phí"
+        : CHECK_COST.toLocaleString("vi-VN") + "đ"
+    }
 `);
-} catch (err: any) {
-  const cachedAfterError = await prisma.tiktokCheckHistory.findUnique({
-    where: {
-      userId_sessionHash: {
-        userId,
-        sessionHash,
-      },
-    },
-  });
-  if (cachedAfterError) {
+
     return NextResponse.json({
       success: true,
-      status: 200,
-      cached: true,
-      charged: false,
-      message: "Cookie này đã check rồi, không trừ thêm tiền",
-      data: cachedAfterError.raw,
+      status: res.status,
+      cached: false,
+      charged: user.role !== "ADMIN",
+      cost: user.role === "ADMIN" ? 0 : CHECK_COST,
+      data: mappedData,
     });
-  }
-
-  throw err;
-}
-
-return NextResponse.json({
-  success: res.ok,
-  status: res.status,
-  cached: false,
-  charged: user.role !== "ADMIN",
-  cost: user.role === "ADMIN" ? 0 : CHECK_COST,
-  data: vubelData,
-});
   } catch (error: any) {
-  await sendTelegram(`
-🚨 <b>LỖI CHECK MVD</b>
+    await sendTelegram(`
+🚨 <b>LỖI CHECK MVD BAMBOO</b>
 
 ❌ ${error?.message || String(error)}
 `);
 
-  return NextResponse.json(
+    return NextResponse.json(
       {
         success: false,
-        message: "Lỗi check Pé Đào",
+        message: "Lỗi check MVD Bamboo",
         error: String(error),
       },
       { status: 500 }
