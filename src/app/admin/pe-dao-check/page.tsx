@@ -8,18 +8,12 @@ type Row = {
   note?: string;
   orderId?: string;
   orderTime?: string;
-  shopName?: string;
   product?: string;
   total?: string;
   status?: string;
   trackingNo?: string;
-  carrierName?: string;
   shipperName?: string;
   shipperPhone?: string;
-  shippingState?: string;
-  paymentMethod?: string;
-  shippedAt?: string;
-  deliveredAt?: string;
   phone?: string;
   address?: string;
   detail?: any;
@@ -165,31 +159,25 @@ async function loadServerHistory() {
       const product = detail?.products?.[0] || order?.products?.[0] || {};
 
       return {
-        session,
-        checking: false,
-        account: detail?.address?.name || "",
-        note: detail?.shippingNote || order?.note || "Có đơn hàng",
-        orderId: detail?.orderId || order?.orderId || "",
-        orderTime: detail?.createdAt || "",
-        shopName: detail?.shop || order?.shop || "",
-        product: product?.name || "",
-        total: detail?.total || order?.total || "",
-        status: detail?.status || order?.status || "Có đơn hàng",
-        trackingNo: detail?.tracking || "",
-        carrierName: detail?.carrierName || "",
-        shipperName: detail?.shipperName || "",
-        shipperPhone: cleanPhone(
-          detail?.shipperPhone || extractPhone(detail?.shippingNote || "")
-        ),
-        shippingState: detail?.shippingState || "",
-        paymentMethod: detail?.paymentMethod || "",
-        shippedAt: detail?.shippedAt || "",
-        deliveredAt: detail?.deliveredAt || "",
-        phone: detail?.address?.phone || "",
-        address: detail?.address?.fullAddress || "",
-        detail,
-        raw: data,
-      };
+  session,
+  checking: false,
+  account: detail?.address?.name || "",
+  note: detail?.shippingNote || "Có đơn hàng",
+  orderId: detail?.orderId || order?.orderId || "",
+  orderTime: detail?.createdAt || "",
+  product: product?.name || "",
+  total: detail?.total || order?.total || "",
+  status: detail?.status || order?.status || "Có đơn hàng",
+  trackingNo: detail?.tracking || "",
+  shipperName: detail?.shipperName || "",
+  shipperPhone: cleanPhone(
+    detail?.shipperPhone || extractPhone(detail?.shippingNote || "")
+  ),
+  phone: detail?.address?.phone || "",
+  address: detail?.address?.fullAddress || "",
+  detail,
+  raw: data,
+};
     } catch (err) {
       if (retry > 0) {
         await delay(1200);
@@ -303,11 +291,11 @@ await delay(900);
     const html = `
       <table border="1">
         <tr>
-          <th>Session</th><th>Mã đơn</th><th>Trạng thái</th><th>Shop</th>
-          <th>Tổng tiền</th><th>Mã vận đơn</th><th>Đơn vị VC</th>
-          <th>Tên shipper</th><th>SĐT shipper</th><th>Trạng thái VC</th>
-          <th>Ghi chú</th><th>Thanh toán</th><th>Thời gian đặt</th>
-          <th>Đã gửi</th><th>Đã giao</th><th>Người nhận</th>
+          <th>Session</th><th>Mã đơn</th><th>Trạng thái</th>
+          <th>Tổng tiền</th><th>Mã vận đơn</th>
+          <th>Tên shipper</th><th>SĐT shipper</th>
+          <th>Ghi chú</th><th>Thời gian đặt</th>
+          <th>Người nhận</th>
           <th>SĐT khách</th><th>Địa chỉ</th><th>Sản phẩm</th>
         </tr>
         ${rows
@@ -317,18 +305,12 @@ await delay(900);
             <td>${esc(r.session)}</td>
             <td>${esc(r.orderId)}</td>
             <td>${esc(r.status)}</td>
-            <td>${esc(r.shopName)}</td>
             <td>${esc(r.total)}</td>
             <td>${esc(r.trackingNo)}</td>
-            <td>${esc(r.carrierName)}</td>
             <td>${esc(r.shipperName)}</td>
             <td>${esc(r.shipperPhone)}</td>
-            <td>${esc(r.shippingState)}</td>
             <td>${esc(r.note)}</td>
-            <td>${esc(r.paymentMethod)}</td>
             <td>${esc(r.orderTime)}</td>
-            <td>${esc(r.shippedAt)}</td>
-            <td>${esc(r.deliveredAt)}</td>
             <td>${esc(r.account)}</td>
             <td>${esc(r.phone)}</td>
             <td>${esc(r.address)}</td>
@@ -421,9 +403,7 @@ await delay(900);
           Số dư ví: {walletBalance.toLocaleString("vi-VN")}đ
         </div>
         <div style={styles.card}>Giá check: 200đ/username</div>
-        {user?.role === "ADMIN" && (
-  <div style={styles.card}>Số dư API: {apiBalance || "—"}</div>
-)}
+        
       </div>
 
       {!user && (
@@ -443,28 +423,22 @@ await delay(900);
           <thead>
             <tr>
               {[
-                "Thao tác",
-                "Username",
-                "Mã Đơn",
-                "Trạng thái",
-                "Shop",
-                "Tổng tiền",
-                "Mã Vận Đơn",
-                "Đơn vị VC",
-                "Tên Shipper",
-                "SĐT Shipper",
-                "Trạng thái VC",
-                "Ghi chú",
-                "Thanh toán",
-                "Thời gian đặt",
-                "Đã gửi",
-                "Đã giao",
-                "Người nhận",
-                "SĐT",
-                "Địa chỉ",
-                "Sản phẩm",
-                "JSON",
-              ].map((h) => (
+  "Thao tác",
+  "Username",
+  "Mã Đơn",
+  "Trạng thái",
+  "Tổng tiền",
+  "Mã Vận Đơn",
+  "Tên Shipper",
+  "SĐT Shipper",
+  "Ghi chú",
+  "Thời gian đặt",
+  "Người nhận",
+  "SĐT",
+  "Địa chỉ",
+  "Sản phẩm",
+  "JSON",
+].map((h) => (
                 <th key={h} style={styles.th}>
                   {h}
                 </th>
@@ -491,7 +465,6 @@ await delay(900);
                 <td style={styles.td}>{mask(r.session)}</td>
                 <td style={styles.td}>{r.orderId || ""}</td>
                 <td style={styles.td}>{r.status || ""}</td>
-                <td style={styles.td}>{r.shopName || ""}</td>
                 <td style={styles.td}>{r.total || ""}</td>
 
                 <td style={{ ...styles.td, color: "#22c55e", fontWeight: 900 }}>
@@ -506,17 +479,12 @@ await delay(900);
                   )}
                 </td>
 
-                <td style={styles.td}>{r.carrierName || ""}</td>
                 <td style={styles.td}>{r.shipperName || ""}</td>
                 <td style={styles.td}>{r.shipperPhone || ""}</td>
-                <td style={styles.td}>{r.shippingState || ""}</td>
                 <td style={{ ...styles.td, whiteSpace: "normal", minWidth: 280 }}>
                   {r.note || ""}
                 </td>
-                <td style={styles.td}>{r.paymentMethod || ""}</td>
                 <td style={styles.td}>{r.orderTime || ""}</td>
-                <td style={styles.td}>{r.shippedAt || ""}</td>
-                <td style={styles.td}>{r.deliveredAt || ""}</td>
                 <td style={styles.td}>{r.account || ""}</td>
                 <td style={styles.td}>{r.phone || ""}</td>
                 <td style={{ ...styles.td, whiteSpace: "normal", minWidth: 360 }}>
@@ -559,10 +527,8 @@ await delay(900);
           <th style={styles.th}>Thời gian</th>
           <th style={styles.th}>Mã đơn</th>
           <th style={styles.th}>Mã vận đơn</th>
-          <th style={styles.th}>Shop</th>
           <th style={styles.th}>Sản phẩm</th>
           <th style={styles.th}>Tổng tiền</th>
-          <th style={styles.th}>Đơn vị VC</th>
           <th style={styles.th}>Shipper</th>
           <th style={styles.th}>SĐT Shipper</th>
           <th style={styles.th}>Phí</th>
@@ -577,10 +543,8 @@ await delay(900);
             </td>
             <td style={styles.td}>{r.orderId}</td>
             <td style={styles.td}>{r.trackingNo}</td>
-            <td style={styles.td}>{r.shopName}</td>
             <td style={styles.td}>{r.product}</td>
             <td style={styles.td}>{r.total}</td>
-            <td style={styles.td}>{r.carrierName}</td>
             <td style={styles.td}>{r.shipperName}</td>
             <td style={styles.td}>{r.shipperPhone}</td>
             <td style={styles.td}>
@@ -611,26 +575,20 @@ await delay(900);
 
 function rowToLine(r: Row) {
   return [
-    r.session,
-    r.orderId,
-    r.status,
-    r.shopName,
-    r.total,
-    r.trackingNo,
-    r.carrierName,
-    r.shipperName,
-    r.shipperPhone,
-    r.shippingState,
-    r.note,
-    r.paymentMethod,
-    r.orderTime,
-    r.shippedAt,
-    r.deliveredAt,
-    r.account,
-    r.phone,
-    r.address,
-    r.product,
-  ].join("|");
+  r.session,
+  r.orderId,
+  r.status,
+  r.total,
+  r.trackingNo,
+  r.shipperName,
+  r.shipperPhone,
+  r.note,
+  r.orderTime,
+  r.account,
+  r.phone,
+  r.address,
+  r.product,
+].join("|");
 }
 
 function delay(ms: number) {
@@ -772,7 +730,7 @@ const styles: any = {
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    minWidth: 2500,
+    minWidth: 1700,
     background: "#020617",
     fontSize: 13,
   },
