@@ -52,6 +52,7 @@ model User {
 
   vipLevel VipLevel @default(BRONZE)
   tiktokChecks TiktokCheckHistory[]
+  addressHistories TiktokAddressHistory[]
   isBanned Boolean @default(false)
 
   role Role @default(USER)
@@ -231,4 +232,31 @@ model TiktokCheckHistory {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, sessionHash])
+}
+model TiktokAddressHistory {
+  id String @id @default(cuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  mode String // CREATE_ADDRESS hoặc ADDRESS_ID
+
+  orderId String
+  cookieHash String?
+
+  name String?
+  phone String?
+  address String?
+  newAddressId String?
+
+  cost Int @default(0)
+  apiCost Int @default(0)
+  profit Int @default(0)
+
+  status String @default("PENDING")
+  note String?
+  raw Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
