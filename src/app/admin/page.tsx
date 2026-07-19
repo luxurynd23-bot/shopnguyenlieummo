@@ -329,6 +329,9 @@ function AdminNav() {
       <a href="/admin/settings" style={styles.navBtn}>
         ⚙️ Cài đặt
       </a>
+      <a href="/admin/tiktok-change-address" style={styles.navBtn}>
+  📦 Đổi địa chỉ TikTok
+</a>
     </div>
   );
 }

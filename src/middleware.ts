@@ -1,32 +1,52 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { jwtVerify } from "jose";
 
-function decodeJwtPayload(token: string): any {
+async function getToken(req: NextRequest) {
+  const token = req.cookies.get("token")?.value;
+
+  if (!token) return null;
+
   try {
-    const payload = token.split(".")[1];
-    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
-    return JSON.parse(json);
+    const secret = new TextEncoder().encode(
+      process.env.JWT_SECRET || "shop_mmo_secret_123456"
+    );
+
+    const { payload } = await jwtVerify(token, secret);
+
+    return payload as {
+      id?: string;
+      role?: string;
+    };
   } catch {
     return null;
   }
 }
 
-export function middleware(req: NextRequest) {
-  const token = req.cookies.get("token")?.value;
+export async function middleware(req: NextRequest) {
+  const pathname = req.nextUrl.pathname;
 
-  if (!token) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  // Cho phép file tĩnh
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    /\.(png|jpg|jpeg|gif|svg|webp|ico|css|js|woff|woff2|ttf)$/i.test(pathname)
+  ) {
+    return NextResponse.next();
   }
 
-  const decoded = decodeJwtPayload(token);
+  const user = await getToken(req);
 
-  if (!decoded || decoded.role !== "ADMIN") {
-    return NextResponse.redirect(new URL("/", req.url));
+  // Chỉ ADMIN mới được vào
+  if (user?.role === "ADMIN") {
+    return NextResponse.next();
   }
 
-  return NextResponse.next();
+  // Chặn tất cả
+  return new NextResponse("403 Forbidden - Website chỉ dành cho Admin", {
+    status: 403,
+  });
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/((?!_next/static|_next/image).*)"],
 };

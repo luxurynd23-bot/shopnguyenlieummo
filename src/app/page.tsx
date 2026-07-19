@@ -378,6 +378,13 @@ function getNextRankInfo(totalDeposit: number) {
     <a href="/admin/settings" style={styles.adminBtn}>
       ⚙️ Cài đặt
     </a>
+    <a href="/admin/tiktok-address" style={styles.adminBtn}>
+  🏠 Đổi địa chỉ TikTok
+</a>
+
+<a href="/admin/tiktok-address-history" style={styles.adminBtn}>
+  📜 Lịch sử đổi địa chỉ
+</a>
   </div>
 )}
         <nav style={styles.nav}>
